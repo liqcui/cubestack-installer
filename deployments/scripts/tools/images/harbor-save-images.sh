@@ -68,6 +68,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+image_manifest_autoload_profile || exit 1
 image_manifest_load || exit 1
 
 HARBOR_HOST="${HARBOR_MIRROR_REGISTRY:-harbor.isuanova.com}"

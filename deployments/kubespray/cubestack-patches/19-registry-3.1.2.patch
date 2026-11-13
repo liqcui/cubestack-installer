@@ -1,0 +1,20 @@
+# patch: 19-registry-3.1.2.patch
+# 目标: roles/kubespray_defaults/defaults/main/download.yml
+# 加入: 2026-11-13
+# 原因: 本仓库把内置 registry 镜像钉在 3.1.2(cluster.defaults.conf 的 REGISTRY_IMAGE_TAG),
+#       但上游 v2.32.1 默认是 2.8.1。该行此前是"直接改树"的漂移, 不在补丁层里 ——
+#       下次换树会静默退回 2.8.1, 与离线预载/镜像清单不一致。补丁把它固化。
+# 上游吸收判据: download.yml 的 registry_version >= 3.1.2(换树自带新值即退休)
+# 上游化: 不提 PR(本地版本钉)
+# ------------------------------------------------------------
+--- a/roles/kubespray_defaults/defaults/main/download.yml
++++ b/roles/kubespray_defaults/defaults/main/download.yml
+@@ -290,7 +290,7 @@
+ scheduler_plugins_scheduler_image_repo: "{{ kube_image_repo }}/scheduler-plugins/kube-scheduler"
+ scheduler_plugins_scheduler_image_tag: "v{{ scheduler_plugins_version }}"
+
+-registry_version: "2.8.1"
++registry_version: "3.1.2"
+ registry_image_repo: "{{ docker_image_repo }}/library/registry"
+ registry_image_tag: "{{ registry_version }}"
+ metrics_server_version: "0.9.0"

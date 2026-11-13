@@ -12,7 +12,7 @@
 - 每条改动的"原因 / 上游吸收判据 / 上游化"三项写在 **patch 文件头的注释块**里(本 README 的表格是摘要,
   以 patch 头为准);判据用于升级时跑"这个补丁是否已被上游吸收、可以退休"的检查(设计 §3.5)。
 
-## 补丁清单(17 处)
+## 补丁清单(18 个在用 + 1 个已退休)
 
 | 补丁 | 目标文件 | 一句话原因(丢了会怎样) | 上游吸收判据 | 上游化 |
 |---|---|---|---|---|
@@ -35,6 +35,11 @@
 | `16-registry-nodeport-leak-wait.patch` | `roles/kubernetes-apps/registry/tasks/main.yml` | 固定 NodePort(默认 31148)可能被 apiserver 判为"已分配但无 Service 持有"(上次部署/重置遗留的泄漏分配, repair 控制器约 6min 才清理)⇒ apply 报 `provided port is already allocated`、role 中断、PVC 未创建、registry Pod Pending(2026-11-03 实机: 11:59 标记泄漏, 12:05 清理, apply 在 12:02);修复: apply 前 `--dry-run=server` 探测, 仅对 already allocated 等待(默认 60×10s, `registry_nodeport_repair_retries/_delay` 可调) | 上游 registry role 在 apply 前自带 NodePort 泄漏分配等待, 或不再固定 `registry_service_nodeport` | 建议提 PR(固定 NodePort 的幂等重放健壮性; 上游默认 ClusterIP 不受影响) |
 
 | `17-local-volume-provisioner-2.10.0.patch` | `roles/kubespray_defaults/defaults/main/download.yml` | 树内 v2.32.0 仍钉 LVP 2.5.0(Debian 11 + Go 1.17, 18 Critical/151 High); 抬到上游 v2.10.0(Go 1.26.6, 修 CVE-2026-56854/56855/84304), 使钉子与树表继续同值; addon 默认关闭, 仅离线包预载 | `local_volume_provisioner_version` >= 2.10.0 | 不提 PR(本地版本钉; 换树 `--check-retired` 判定) |
+| `19-registry-3.1.2.patch` | `roles/kubespray_defaults/defaults/main/download.yml` | 内置 registry 镜像钉 3.1.2(`cluster.defaults.conf` 的 `REGISTRY_IMAGE_TAG`), 上游默认 2.8.1; 该行此前是"直接改树"的漂移, 换树会静默退回 2.8.1, 与离线预载/镜像清单不一致 | `registry_version` >= 3.1.2 | 不提 PR(本地版本钉) |
+| `20-ansible-control-path.patch` | `ansible.cfg` | 显式 `control_path` 让 ControlMaster 真正复用 SSH 连接(每个远程任务从 10–21s 降到毫秒级); 该行此前是"直接改树"的漂移, 换树会静默丢失 | 上游默认启用 `control_path`(或等价复用配置) | 不提 PR(环境特化) |
+
+> 编号 `18` 预留给"上游 tag 间 delta 补丁"(阶段 2 的 delta 刷新模式); 当前阶段 1 仍走整树替换,
+> 故 18 暂不存在。
 
 ### 已退休(1 处,别再加回来)
 
@@ -44,11 +49,12 @@
 (注意:这不是"上游吸收", 是上游删除了整段逻辑)。教训:目标文件消失时 `--check-retired` 只会报 KEEP
 (反打不上 ≠ 上游未吸收), 退休必须人工确认。
 
-> 本目录 16 个补丁 = 换树时固化的 7 个(spec §2.2 表的第 4、5、7(=原手工项)、8、9、10、11 行;
+> 本目录 18 个补丁 = 换树时固化的 7 个(spec §2.2 表的第 4、5、7(=原手工项)、8、9、10、11 行;
 > **第 6 行(补丁 03)已退休**,见上)+ 换树后实机部署暴露的 3 个(前缀 `09`–`11`,与 spec §2.2 行号无关)
 > + 后续实机/覆盖安装暴露的 5 个(`12`–`16`: coredns resolv.conf、reset 跳过 calico 检查、
 > calico 3.32.2 校验表/RBAC、registry 固定 NodePort 泄漏等待)+ CVE 抬版 1 个(`17`:
-> local-volume-provisioner 2.5.0 → 2.10.0)。
+> local-volume-provisioner 2.5.0 → 2.10.0)+ 阶段 1 补漂移 2 个(`19` registry 3.1.2、`20` ansible control_path;
+> 编号 `18` 预留给阶段 2 的 tag delta 补丁)。
 
 ## 不在本目录的 3 处改动(别重复两套)
 

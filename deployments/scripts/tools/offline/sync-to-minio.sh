@@ -21,6 +21,7 @@
 #   ./sync-to-minio.sh            # 同步(默认 --overwrite 增量)
 #   ./sync-to-minio.sh --prune    # 同步 + 删除远端多余文件(与本地严格一致)
 #   ./sync-to-minio.sh --dry-run  # 仅预览(不实际同步)
+#   ./sync-to-minio.sh --version v2.32.1   # 只同步 kubespray/<版本>/ 目录(阶段 2)
 # 数据源: config/cluster.conf (MINIO_ALIAS / MINIO_ENDPOINT / MINIO_ACCESS_KEY /
 #                              MINIO_SECRET_KEY / MINIO_BUCKET / MINIO_REMOTE_DIR / OFFLINE_FILES_DIR)
 # ============================================================
@@ -49,11 +50,13 @@ fi
 PRUNE=0
 DRY_RUN=0
 FORCE_FULL_PRUNE=0
+VERSION_ONLY=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --prune)  PRUNE=1; shift ;;
         --dry-run) DRY_RUN=1; shift ;;
         --force-full-prune) FORCE_FULL_PRUNE=1; shift ;;
+        --version) VERSION_ONLY="${2:?--version 需要版本名, 如 v2.32.1}"; shift 2 ;;
         # --plan-versions: 只读计划(扫 LOCAL_ONLY 标记, 打印"将上传/将跳过"), 不碰 mc、不联网。
         #   与下面的 LOCAL_SRC 同源(此处提前算, 以避开 mc 依赖) —— 改一处要改两处。
         --plan-versions)
@@ -74,24 +77,38 @@ while [ $# -gt 0 ]; do
             printf '合计: 上传 %d 个版本目录, 跳过 %d 个(本地临时)\n' "${_n_up}" "${_n_skip}"
             exit 0 ;;
         -h|--help) head -25 "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-        *) err "未知参数: $1(可用 --prune/--dry-run/--force-full-prune/--plan-versions)"; exit 1 ;;
+        *) err "未知参数: $1(可用 --prune/--dry-run/--force-full-prune/--plan-versions/--version)"; exit 1 ;;
     esac
 done
 
 # 版本目录扫描(2026-09-30): ① LOCAL_ONLY 一律不上传(设计 D4)② 存在版本目录时收窄 --prune
 #   —— 全根 mc mirror --remove 会删掉远端**其它版本**的对象(多版本共存下是数据损失)。
+# --version: 只同步一个版本目录; 此时不做全根扫描, --prune 也只在版本目录内生效。
+VERSION_DIR_LOCAL=""
+if [ -n "${VERSION_ONLY}" ]; then
+    _root="${OFFLINE_FILES_ROOT:-${REPO_ROOT}/deployments/offline-files}"
+    if [ -n "${OFFLINE_FILES_DIR_EXPLICIT}" ]; then
+        _root="$(dirname "$(dirname "${OFFLINE_FILES_DIR_EXPLICIT}")")"
+    fi
+    VERSION_DIR_LOCAL="${_root}/kubespray/${VERSION_ONLY}"
+    [ -d "${VERSION_DIR_LOCAL}" ] || { err "版本目录不存在: ${VERSION_DIR_LOCAL}"; exit 1; }
+    [ -f "${VERSION_DIR_LOCAL}/LOCAL_ONLY" ] && { err "拒绝上传 LOCAL_ONLY 版本: ${VERSION_DIR_LOCAL}"; exit 1; }
+fi
 VERSION_RELS=(); LOCAL_ONLY_RELS=()
-shopt -s nullglob
-for _d in "${OFFLINE_FILES_DIR_EXPLICIT:-${OFFLINE_FILES_ROOT:-${REPO_ROOT}/deployments/offline-files}}"/*/*/; do
-    { [ -f "${_d}/tree.tar.gz" ] || [ -f "${_d}/VERSION.profile" ] || [ -f "${_d}/LOCAL_ONLY" ] || [ -d "${_d}/images" ]; } || continue
-    _rel="$(basename "$(dirname "${_d}")")/$(basename "${_d}")/"
-    VERSION_RELS+=("${_rel}")
-    [ -f "${_d}/LOCAL_ONLY" ] && LOCAL_ONLY_RELS+=("${_rel}")
-done
-shopt -u nullglob
+if [ -z "${VERSION_ONLY}" ]; then
+    shopt -s nullglob
+    for _d in "${OFFLINE_FILES_DIR_EXPLICIT:-${OFFLINE_FILES_ROOT:-${REPO_ROOT}/deployments/offline-files}}"/*/*/; do
+        { [ -f "${_d}/tree.tar.gz" ] || [ -f "${_d}/VERSION.profile" ] || [ -f "${_d}/LOCAL_ONLY" ] || [ -d "${_d}/images" ]; } || continue
+        _rel="$(basename "$(dirname "${_d}")")/$(basename "${_d}")/"
+        VERSION_RELS+=("${_rel}")
+        [ -f "${_d}/LOCAL_ONLY" ] && LOCAL_ONLY_RELS+=("${_rel}")
+    done
+    shopt -u nullglob
+fi
 
 # --prune 收窄: 存在版本目录时, 全根 --remove 会互删各版本 ⇒ 必须显式 --force-full-prune
-if [ "${PRUNE}" = "1" ] && [ "${DRY_RUN}" = "0" ] && [ "${FORCE_FULL_PRUNE}" != "1" ] && [ "${#VERSION_RELS[@]}" -gt 0 ]; then
+#   --version 只同步一个版本目录, --prune 在该目录内是安全的, 不受此限。
+if [ "${PRUNE}" = "1" ] && [ "${DRY_RUN}" = "0" ] && [ "${FORCE_FULL_PRUNE}" != "1" ] && [ -z "${VERSION_ONLY}" ] && [ "${#VERSION_RELS[@]}" -gt 0 ]; then
     err "拒绝执行 --prune: 本地存在 ${#VERSION_RELS[@]} 个版本目录, 全根 --remove 会删除远端**其它版本**的对象"
     err "  → 先看计划: $0 --prune --dry-run"
     err "  → 确认要全根对齐(远端多余对象会被删)再加 --force-full-prune"
@@ -126,8 +143,12 @@ fi
 
 # ---------------- 3. 本地源目录 + 远端目标(结构一致) ----------------
 LOCAL_SRC="${OFFLINE_FILES_DIR_EXPLICIT:-${OFFLINE_FILES_ROOT:-${REPO_ROOT}/deployments/offline-files}}"
-[ -d "${LOCAL_SRC}" ] || { err "本地 offline-files 目录不存在: ${LOCAL_SRC}"; exit 1; }
 REMOTE_DST="${MINIO_ALIAS}/${MINIO_BUCKET}/${MINIO_REMOTE_DIR}"
+if [ -n "${VERSION_ONLY}" ]; then
+    LOCAL_SRC="${VERSION_DIR_LOCAL}"
+    REMOTE_DST="${REMOTE_DST}/kubespray/${VERSION_ONLY}"
+fi
+[ -d "${LOCAL_SRC}" ] || { err "本地 offline-files 目录不存在: ${LOCAL_SRC}"; exit 1; }
 
 # 可读性预检: mc mirror 对不可读文件会静默跳过(曾致 root-0600 的 docker-save tar 未同步,
 # 却仍报"同步完成")。同步前先全量扫描, 发现不可读文件立即报错给指引, 杜绝部分同步假成功。

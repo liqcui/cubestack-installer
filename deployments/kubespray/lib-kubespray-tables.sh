@@ -70,12 +70,56 @@ kb_tables_kubelet_has() {   # <checksums.yml> <ver>
 }
 
 # kubelet_checksums 表内全部版本(升序文件顺序; 供"必须显式选一个在表内的版本"时给候选)
+# 表按 amd64/arm64/... 分块, 同一版本会出现多次 ⇒ 去重后输出(保持首次出现顺序)。
 kb_tables_kubelet_list() {   # <checksums.yml>
     awk '
         /^kubelet_checksums:/ { s=1; next }
         /^[a-zA-Z_]+_checksums:/ { s=0 }
         s && $1 ~ /^[0-9]+\.[0-9]+\.[0-9]+:$/ { v=$1; sub(/:$/,"",v); print v }
+    ' "$1" | awk '!seen[$0]++'
+}
+
+# 表首 = 该树支持的最高 Kubernetes(最高 minor + 最高 patch)。
+# 上游 kube_version 默认取 kubelet_checksums 的首键; 本函数与它同口径。
+kb_tables_kubelet_max() {   # <checksums.yml>
+    kb_tables_kubelet_list "$1" | head -1
+}
+
+# 指定 minor 线(如 1.35)内的最高 patch; 线不存在时输出空。
+kb_tables_kubelet_max_in_line() {   # <checksums.yml> <major.minor>
+    [ -n "${2:-}" ] || return 0
+    kb_tables_kubelet_list "$1" | awk -v p="$2." 'index($0,p)==1 { print; exit }'
+}
+
+# 表内出现过的 minor 线(新→旧, 去重), 供 --line 报错时给候选。
+kb_tables_kubelet_lines() {   # <checksums.yml>
+    kb_tables_kubelet_list "$1" | awk -F. '{ k=$1"."$2; if (!seen[k]++) print k }'
+}
+
+# 某 checksums 小节在 <arch> 下、文件顺序首个 < <bound> 的键(版本比较, 非字典序)。
+# 用于复刻下游表达式, 如 crictl 的 select('version', kube_major_next_version, '<')。
+kb_tables_first_key_below() {   # <checksums.yml> <section> <arch> <bound>
+    awk -v want="$2" -v arch="$3" -v bound="$4" '
+        function vlt(x, y,   n, m, i, xa, ya) {
+            n=split(x, X, "."); m=split(y, Y, ".")
+            for (i=1; i<=(n>m?n:m); i++) {
+                xa=(i<=n)?X[i]+0:0; ya=(i<=m)?Y[i]+0:0
+                if (xa<ya) return 1; if (xa>ya) return 0
+            }
+            return 0
+        }
+        /^[a-zA-Z_]+_checksums:/ { sec=$1; sub(/:$/,"",sec); a=0 }
+        sec==want && /^  [a-z0-9_]+:$/ { a=($1 == arch ":"); next }
+        a && $1 ~ /^[0-9]+\.[0-9]+\.[0-9]+:$/ { v=$1; sub(/:$/,"",v); if (vlt(v,bound)) { print v; exit } }
     ' "$1"
+}
+
+# crictl 版本: 上游 download.yml 的 select('version', kube_major_next_version, '<') 首键。
+kb_tables_crictl_for() {   # <checksums.yml> <kube major, 如 1.35>
+    local major="${2:-}"
+    [ -n "${major}" ] || return 0
+    local next="${major%.*}.$(( ${major#*.} + 1 ))"
+    kb_tables_first_key_below "$1" crictl_checksums amd64 "${next}"
 }
 
 # ============================================================

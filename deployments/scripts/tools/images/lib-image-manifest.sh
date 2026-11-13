@@ -119,6 +119,36 @@ image_manifest_load() {
     return 0
 }
 
+# ---------- 1.5 版本档案(profile)加载 ----------
+# 若调用方用 KUBESPRAY_VERSION/KUBESPRAY_PROFILE 指定了某个在库版本, 自动加载其 profile,
+# 让 `KUBESPRAY_VERSION=v2.32.1 harbor-save-images.sh` 使用该版本的 K8S/组件钉子,
+# 而不是仓库当前 cluster.defaults.conf/defaults。显式传入的变量仍由 image_manifest_load 保护。
+image_manifest_load_profile() {   # <tag>
+    local tag="${1:-}" pf
+    [ -n "${tag}" ] || return 0
+    pf="${IM_REPO_ROOT}/deployments/config/profiles/${tag}.profile"
+    if [ ! -f "${pf}" ]; then
+        pf="${IMAGE_OFFLINE_ROOT:-${IM_REPO_ROOT}/deployments/offline-files}/kubespray/${tag}/VERSION.profile"
+    fi
+    [ -f "${pf}" ] || { echo "【错误】找不到版本档案: ${tag}(profiles/${tag}.profile 或版本目录 VERSION.profile)" >&2; return 1; }
+    local _nounset_was_on=0
+    case "$-" in *u*) _nounset_was_on=1 ;; esac
+    set +u
+    # shellcheck disable=SC1090
+    source "${pf}"
+    [ "${_nounset_was_on}" = "1" ] && set -u
+    KUBESPRAY_VERSION="${tag}"
+    KUBESPRAY_PROFILE="${tag}"
+    return 0
+}
+
+image_manifest_autoload_profile() {
+    local tag="${KUBESPRAY_PROFILE:-${KUBESPRAY_VERSION:-}}"
+    [ -n "${tag}" ] || return 0
+    [ -f "${IM_REPO_ROOT}/deployments/config/profiles/${tag}.profile" ] || return 0
+    image_manifest_load_profile "${tag}"
+}
+
 # ---------- 3. 清单解析 ----------
 image_manifest_path() {
     echo "${IMAGE_MANIFEST:-${IM_REPO_ROOT}/deployments/config/images.manifest}"

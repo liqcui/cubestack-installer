@@ -85,6 +85,7 @@ HARBOR_INSECURE="${HARBOR_MIRROR_INSECURE:-false}"
 # Harbor API 基址(https; 某些内网只有 http 时用 HARBOR_MIRROR_API 覆盖)
 HARBOR_API="${HARBOR_MIRROR_API:-https://${HARBOR_HOST}}"
 
+image_manifest_autoload_profile || exit 1
 image_manifest_load || exit 1
 
 # ---- 分组过滤 ----

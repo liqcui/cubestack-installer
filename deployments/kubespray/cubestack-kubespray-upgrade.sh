@@ -2,13 +2,25 @@
 # CubeStack: kubespray 通用升级入口 —— 取树 / 备份 / 换树 / 退休判定 / 重放补丁层。
 # 设计: docs/kubespray-v2.32/design.md §3.4 的 9 步 SOP 里, 机械步骤由本脚本执行, 判断处停下交人。
 #
-# 用法: cubestack-kubespray-upgrade.sh <tag> [--root DIR] [--tree-src DIR] [--no-fetch]
-#   <tag>            目标 kubespray tag, 如 v2.30.0
-#   --root DIR       部署根, 树在 DIR/kubespray(默认 = 本脚本所在目录, 即仓库内真树)
-#   --tree-src DIR   直接用本机已备好的**纯净树**(离线/演练路径), 不联网
-#   --no-fetch       禁止联网 clone(必须同时给 --tree-src)
-#   K8S_VERSION=<ver>  环境变量, 声明"这次要钉的新 k8s 版本"(默认从 cluster.conf 读, 同
-#                    check-modules.sh ⑫ / cubestack-offline.sh 的"环境变量优先"惯例)
+# 用法: cubestack-kubespray-upgrade.sh <tag> [选项]
+#   <tag>                 目标 kubespray tag, 如 v2.32.1 / v2.33.0
+#   --root DIR            部署根, 树在 DIR/kubespray(默认 = 本脚本所在目录, 即仓库内真树)
+#   --tree-src DIR        直接用本机已备好的**纯净树**(离线/演练路径), 不联网
+#   --no-fetch            禁止联网 clone(必须同时给 --tree-src)
+#   --k8s-version V       显式指定目标 Kubernetes(必须在目标树 kubelet_checksums 表内)
+#   --line X.Y            取该 minor 线的最高 patch(如 --line 1.35)
+#   --keep-k8s-line       保留当前 k8s 线, 取该线最高 patch
+#   --refresh             强制按"同线刷新"处理(major.minor 相同)
+#   --line-upgrade        强制按"跨线升级"处理(major.minor 变化)
+#   --check               只打印计划(mode/目标 k8s/版本面), 不换树、不写文件
+#   --set-default         成功后同步更新 cluster.defaults.conf 与 inventory 钉子
+#   --force-version-dir   版本目录已存在时删除重建
+#   --profile-dir DIR     覆盖 profile 输出目录(默认 <root>/../config/profiles)
+#   --defaults-conf FILE  覆盖 cluster.defaults.conf 路径
+#
+# 默认 Kubernetes 选择(阶段 1): 取目标树 kubelet_checksums 表首 = 该 kubespray
+#   版本支持的最高 Kubernetes。--line / --keep-k8s-line / --k8s-version 可覆盖。
+#   ⚠ 环境变量 K8S_VERSION 不再作为目标版本(仅在 --keep-k8s-line 时用于识别当前线)。
 #
 # 退出码: 0 = 换树 + 退休判定 + 重放全部成功
 #         1 = 重放有 CONFLICT(停下点名文件; 人工处置后重跑)
@@ -55,6 +67,18 @@ CONF="${SELF_DIR}/../config/cluster.conf"
 APPLIER="${SELF_DIR}/cubestack-patch-apply.sh"
 PATCH_DIR="${SELF_DIR}/cubestack-patches"
 CHK_REL="roles/kubespray_defaults/vars/main/checksums.yml"
+CONFIG_DIR="${SELF_DIR}/../config"
+PROFILE_DIR="${CONFIG_DIR}/profiles"
+DEFAULTS_CONF="${CONFIG_DIR}/cluster.defaults.conf"
+OFFLINE_ROOT="${OFFLINE_FILES_ROOT:-${SELF_DIR}/../offline-files}"
+PROFILE_DIR_ARG=""; DEFAULTS_CONF_ARG=""
+# 版本选择 / 模式开关(阶段 1)
+K8S_ARG=""; K8S_LINE=""; K8S_KEEP_LINE=0; MODE_FORCE=""
+CHECK_ONLY=0; SET_DEFAULT=0; FORCE_VERSION_DIR=0
+
+# 树内版本表解析(最高 k8s / 指定线最高 patch)
+# shellcheck source=lib-kubespray-tables.sh
+source "${SELF_DIR}/lib-kubespray-tables.sh"
 
 say()  { printf '\n=== %s\n' "$*"; }
 log()  { printf '  %s\n' "$*"; }
@@ -72,13 +96,23 @@ rerun_hint() {
 
 usage() {
     cat <<'USAGE'
-用法: cubestack-kubespray-upgrade.sh <tag> [--root DIR] [--tree-src DIR] [--no-fetch]
-  <tag>            目标 kubespray tag, 如 v2.30.0
-  --root DIR       部署根, 树在 DIR/kubespray(默认 = 本脚本所在目录, 即仓库内真树)
-  --tree-src DIR   直接用本机已备好的纯净树(离线/演练路径), 不联网
-  --no-fetch       禁止联网 clone(必须同时给 --tree-src)
-  K8S_VERSION=<ver>  环境变量: 声明这次要钉的新 k8s 版本(默认从 cluster.conf 读)
-退出码: 0 = 成功; 1 = 重放有 CONFLICT(人工处置后重跑); 2 = 参数/环境/前置错误
+用法: cubestack-kubespray-upgrade.sh <tag> [选项]
+  <tag>                 目标 kubespray tag, 如 v2.32.1 / v2.33.0
+  --root DIR            部署根, 树在 DIR/kubespray(默认 = 本脚本所在目录)
+  --tree-src DIR        直接用本机已备好的纯净树(离线/演练路径), 不联网
+  --no-fetch            禁止联网 clone(必须同时给 --tree-src)
+  --k8s-version V       显式指定目标 Kubernetes(必须在目标树表内)
+  --line X.Y            取该 minor 线的最高 patch(如 --line 1.35)
+  --keep-k8s-line       保留当前 k8s 线, 取该线最高 patch
+  --refresh             强制按同线刷新处理(major.minor 相同)
+  --line-upgrade        强制按跨线升级处理(major.minor 变化)
+  --check               只打印计划, 不换树、不写文件
+  --set-default         成功后更新 cluster.defaults.conf 与 inventory 钉子
+  --force-version-dir   版本目录已存在时删除重建
+  --profile-dir DIR     覆盖 profile 输出目录(默认 <root>/../config/profiles)
+  --defaults-conf FILE  覆盖 cluster.defaults.conf 路径
+默认 Kubernetes = 目标树 kubelet_checksums 表首(该 kubespray 支持的最高版本)。
+退出码: 0 = 成功; 1 = 重放有 CONFLICT; 2 = 参数/环境/前置错误
 USAGE
 }
 
@@ -96,6 +130,16 @@ while [ $# -gt 0 ]; do
         --root)      [ $# -ge 2 ] || die "--root 需要一个目录参数";      ROOT="$2";      shift 2;;
         --tree-src)  [ $# -ge 2 ] || die "--tree-src 需要一个目录参数";  TREE_SRC="$2";  shift 2;;
         --no-fetch)  NO_FETCH=1; shift;;
+        --k8s-version) [ $# -ge 2 ] || die "--k8s-version 需要一个版本号"; K8S_ARG="$2"; shift 2;;
+        --line)      [ $# -ge 2 ] || die "--line 需要 X.Y";              K8S_LINE="$2";   shift 2;;
+        --keep-k8s-line) K8S_KEEP_LINE=1; shift;;
+        --refresh)   MODE_FORCE="refresh"; shift;;
+        --line-upgrade) MODE_FORCE="line-upgrade"; shift;;
+        --check)     CHECK_ONLY=1; shift;;
+        --set-default) SET_DEFAULT=1; shift;;
+        --force-version-dir) FORCE_VERSION_DIR=1; shift;;
+        --profile-dir) [ $# -ge 2 ] || die "--profile-dir 需要一个目录"; PROFILE_DIR_ARG="$2"; shift 2;;
+        --defaults-conf) [ $# -ge 2 ] || die "--defaults-conf 需要一个文件"; DEFAULTS_CONF_ARG="$2"; shift 2;;
         -h|--help)   usage; exit 0;;
         -*)          usage >&2; die "未知参数: $1";;
         *)           [ -z "${TAG}" ] || die "多余参数: $1(只接受一个 <tag>)"; TAG="$1"; shift;;
@@ -105,6 +149,12 @@ done
 RAW_ROOT="${ROOT}"
 ROOT="$(cd "${ROOT}" 2>/dev/null && pwd)" || die "--root 目录不存在: ${RAW_ROOT}"
 TREE="${ROOT}/kubespray"
+# profile/defaults/offline 路径跟随 --root(演练根不写仓库；真实部署根 = deployments/kubespray)
+BASE_DEPLOY_DIR="$(cd "${ROOT}/.." 2>/dev/null && pwd)" || BASE_DEPLOY_DIR="$(dirname "${ROOT}")"
+CONFIG_DIR="${BASE_DEPLOY_DIR}/config"
+PROFILE_DIR="${PROFILE_DIR_ARG:-${CONFIG_DIR}/profiles}"
+DEFAULTS_CONF="${DEFAULTS_CONF_ARG:-${CONFIG_DIR}/cluster.defaults.conf}"
+OFFLINE_ROOT="${OFFLINE_FILES_ROOT:-${BASE_DEPLOY_DIR}/offline-files}"
 
 printf '=== CubeStack kubespray 升级入口 ===\n'
 printf '  目标 tag : %s\n' "${TAG}"
@@ -127,13 +177,16 @@ log "补丁层: ${N_PATCH} 个 .patch"
 REPO="$(git -C "${TREE}" rev-parse --show-toplevel 2>/dev/null || true)"
 if [ -n "${REPO}" ]; then
     dirty="$(git -C "${REPO}" status --porcelain --untracked-files=no 2>/dev/null)"
-    if [ -n "${dirty}" ]; then
+    if [ -n "${dirty}" ] && [ "${CHECK_ONLY}" = "1" ]; then
+        log "--check: 工作区不干净, 跳过干净门(只读, 不换树)"
+    elif [ -n "${dirty}" ]; then
         printf '%s\n' "${dirty}" | head -10 >&2
         printf '  %s\n' "若这些改动正是上一轮换树的产物(成批的树内文件): 那是预期结果 —— git add + git commit 落盘后重跑即可。" >&2
         rerun_hint >&2
         die "git 工作区不干净(上面是前 10 条): 先提交/暂存再升级 —— 换树后未提交的树改动无法找回"
+    else
+        log "git 工作区干净(仓库: ${REPO})"
     fi
-    log "git 工作区干净(仓库: ${REPO})"
     stray="$(git -C "${REPO}" ls-files --others --exclude-standard -- "${TREE}" 2>/dev/null | head -20)"
     if [ -n "${stray}" ]; then
         warn "树内有未跟踪文件(换树会删除; 备份 tag 只含已提交内容):"
@@ -151,7 +204,7 @@ OLD_VER="$(grep -m1 '^version:' "${TREE}/galaxy.yml" | awk '{print $2}')"
 OLD_FP="$(tree_fingerprint "${TREE}")"
 log "旧树版本: ${OLD_VER}"
 log "旧树指纹: ${OLD_FP}(相对路径内容摘要, 排除 .venv/.git)"
-if [ -n "${REPO}" ]; then
+if [ -n "${REPO}" ] && [ "${CHECK_ONLY}" != "1" ]; then
     BACKUP_TAG="kubespray-${OLD_VER}-cubestack"
     if git -C "${REPO}" rev-parse -q --verify "refs/tags/${BACKUP_TAG}" >/dev/null 2>&1; then
         log "备份 tag 已存在, 跳过: ${BACKUP_TAG}"
@@ -162,6 +215,8 @@ if [ -n "${REPO}" ]; then
     fi
     GTREE="$(git -C "${REPO}" rev-parse --verify -q "HEAD:$(realpath --relative-to="${REPO}" "${TREE}")" 2>/dev/null || true)"
     [ -n "${GTREE}" ] && log "旧树 git tree 对象: ${GTREE}(回退: git -C ${REPO} checkout ${BACKUP_TAG} -- <路径>)"
+elif [ -n "${REPO}" ]; then
+    log "--check: 跳过备份 tag 创建(只读)"
 else
     log "无 git 仓库 → 跳过 tag 备份(演练路径); 回退只能靠上面的指纹 + 源树副本"
 fi
@@ -194,43 +249,78 @@ NEW_VER="$(grep -m1 '^version:' "${TREE_SRC}/galaxy.yml" | awk '{print $2}')"
 [ "${NEW_VER}" = "${TAG#v}" ] || die "galaxy.yml 版本(${NEW_VER}) != 目标 tag(${TAG}) —— 拿错树了"
 log "galaxy.yml 版本: ${NEW_VER} == ${TAG}"
 
-# k8s 钉子: 环境变量优先, 否则子 shell 求值 cluster.conf(与 check-modules.sh ⑫ 同法)
-K8S_REQ="${K8S_VERSION:-}"
-K8S_FROM_ENV=0
-if [ -z "${K8S_REQ}" ] && [ -f "${CONF}" ]; then
-    K8S_REQ="$( ( set +u; . "${CONF}" >/dev/null 2>&1 || true; printf '%s' "${K8S_VERSION:-}" ) )"
-    K8S_FROM="cluster.conf(${CONF})"
-else
-    K8S_FROM="环境变量 K8S_VERSION(视为人工确认: 本次要换到该版本)"
-    K8S_FROM_ENV=1
+# ---- 升级类型: 同线刷新 vs 跨线升级 ----
+OLD_LINE="${OLD_VER%.*}"
+NEW_LINE="${NEW_VER%.*}"
+MODE="refresh"
+[ "${OLD_LINE}" = "${NEW_LINE}" ] || MODE="line-upgrade"
+if [ -n "${MODE_FORCE}" ] && [ "${MODE_FORCE}" != "${MODE}" ]; then
+    die "强制模式 ${MODE_FORCE} 与版本线不符: ${OLD_VER} -> ${NEW_VER} 是 ${MODE}(kubespray ${OLD_LINE} -> ${NEW_LINE})"
 fi
-[ -n "${K8S_REQ}" ] || die "拿不到要核对的 k8s 版本: ${CONF} 里没有 K8S_VERSION, 也没给 K8S_VERSION 环境变量"
-K8S_REQ="${K8S_REQ#v}"
-log "k8s 钉子: ${K8S_REQ}(来源: ${K8S_FROM})"
+log "升级类型: ${MODE}(kubespray ${OLD_LINE} -> ${NEW_LINE})"
+
+# ---- 当前 k8s(用于 --keep-k8s-line 与版本面 diff) ----
+CUR_K8S=""
+CUR_K8S_FROM=""
+if [ -n "${K8S_VERSION:-}" ]; then
+    CUR_K8S="${K8S_VERSION}"; CUR_K8S_FROM="环境变量 K8S_VERSION"
+elif [ -f "${PROFILE_DIR}/v${OLD_VER}.profile" ]; then
+    CUR_K8S="$(grep -m1 -E '^K8S_VERSION=' "${PROFILE_DIR}/v${OLD_VER}.profile" | cut -d= -f2-)"
+    [ -n "${CUR_K8S}" ] && CUR_K8S_FROM="当前 profile v${OLD_VER}.profile"
+elif [ -f "${CONF}" ]; then
+    CUR_K8S="$( ( set +u; . "${CONF}" >/dev/null 2>&1 || true; printf '%s' "${K8S_VERSION:-}" ) )"
+    [ -n "${CUR_K8S}" ] && CUR_K8S_FROM="cluster.conf(${CONF})"
+fi
+CUR_K8S_BARE="${CUR_K8S#v}"
+CUR_K8S_LINE="${CUR_K8S_BARE%.*}"
 
 CHK="${TREE_SRC}/${CHK_REL}"
 [ -f "${CHK}" ] || die "目标树缺 ${CHK_REL}(版本表), 无法核验"
-# kubelet_checksums 是权威表: 上游 kube_version_min_required 与 kubelet_binary_checksum 都取它
-KUBE_VERS="$(awk '
-    /^[a-zA-Z_]+_checksums:/ { sec=$1; sub(/:$/,"",sec) }
-    sec=="kubelet_checksums" && $1 ~ /^[0-9]+\.[0-9]+\.[0-9]+:$/ { v=$1; sub(/:$/,"",v); print v }
-' "${CHK}" | sort -Vu)"
-[ -n "${KUBE_VERS}" ] || die "解析不出 kubelet_checksums 的版本表: ${CHK}"
-V_MIN="$(printf '%s\n' "${KUBE_VERS}" | head -1)"
-V_MAX="$(printf '%s\n' "${KUBE_VERS}" | tail -1)"
-if printf '%s\n' "${KUBE_VERS}" | grep -qx "${K8S_REQ}"; then
-    log "k8s 核验通过: ${K8S_REQ} 在 ${TAG} 的 kubelet 表内(范围 ${V_MIN} – ${V_MAX})"
+KUBE_MAX="$(kb_tables_kubelet_max "${CHK}")"
+KUBE_LINES="$(kb_tables_kubelet_lines "${CHK}" | tr '\n' ' ')"
+[ -n "${KUBE_MAX}" ] || die "解析不出 kubelet_checksums 的版本表: ${CHK}"
+V_MIN="$(kb_tables_kubelet_list "${CHK}" | tail -1)"
+V_MAX="${KUBE_MAX}"
+
+# ---- 目标 k8s 选择(优先级: --k8s-version > --line > --keep-k8s-line > 表首) ----
+K8S_TARGET=""; K8S_FROM=""
+if [ -n "${K8S_ARG}" ]; then
+    K8S_TARGET="${K8S_ARG#v}"; K8S_FROM="--k8s-version"
+elif [ -n "${K8S_LINE}" ]; then
+    K8S_TARGET="$(kb_tables_kubelet_max_in_line "${CHK}" "${K8S_LINE}")"
+    [ -n "${K8S_TARGET}" ] || die "目标树没有 k8s 线 ${K8S_LINE}; 可用线: ${KUBE_LINES}"
+    K8S_FROM="--line ${K8S_LINE}"
+elif [ "${K8S_KEEP_LINE}" = "1" ]; then
+    [ -n "${CUR_K8S_LINE}" ] || die "--keep-k8s-line 需要当前 k8s 版本(设置 K8S_VERSION 或先有 profile)"
+    K8S_TARGET="$(kb_tables_kubelet_max_in_line "${CHK}" "${CUR_K8S_LINE}")"
+    [ -n "${K8S_TARGET}" ] || die "当前线 ${CUR_K8S_LINE} 不在新树表内; 可用线: ${KUBE_LINES}"
+    K8S_FROM="--keep-k8s-line(${CUR_K8S_LINE})"
 else
-    # 重跑提示: 回放本次的命令行(树来源/根/开关), 只把 K8S_VERSION 换成建议值
-    RERUN="K8S_VERSION=${V_MAX} $(basename "${BASH_SOURCE[0]}") ${TAG}"
-    [ "${ROOT}" != "${SELF_DIR}" ] && RERUN="${RERUN} --root ${ROOT}"
-    [ -n "${TREE_SRC}" ] && RERUN="${RERUN} --tree-src ${TREE_SRC}"
-    [ "${NO_FETCH}" = 1 ] && RERUN="${RERUN} --no-fetch"
-    warn "该 tag 的 kubelet 表里没有 ${K8S_REQ}"
-    die "${TAG} 支持的 k8s 版本范围 = ${V_MIN} – ${V_MAX} —— 升级必须先决定新的 k8s 钉子:
-      ① 改 cluster.conf 的 K8S_VERSION(与 cluster.conf.example 同步), 或
-      ② 本次先由命令行声明(等价于"人工确认换到该版本"): ${RERUN}
-         ⚠ ② 只是本次声明, cluster.conf 仍需在"版本面"步骤同步改, 否则下次部署会退回旧钉子"
+    K8S_TARGET="${KUBE_MAX}"; K8S_FROM="默认: 新树表首"
+fi
+
+if [ "$(kb_tables_kubelet_has "${CHK}" "${K8S_TARGET}")" != "1" ]; then
+    die "K8S_VERSION=${K8S_TARGET} 不在 ${TAG} 的 kubelet 表内; 可用: $(kb_tables_kubelet_list "${CHK}" | tr '\n' ' ')"
+fi
+log "目标 k8s: ${K8S_TARGET}(来源: ${K8S_FROM}; 表范围 ${V_MIN} – ${V_MAX})"
+log "当前 k8s: ${CUR_K8S:-未知}(${CUR_K8S_FROM:-无})"
+
+# 环境变量 K8S_VERSION 不再作为目标版本；只在 --keep-k8s-line 时用于识别当前线。
+if [ -n "${K8S_VERSION:-}" ] && [ -z "${K8S_ARG}" ] && [ "${K8S_KEEP_LINE}" = "0" ]; then
+    warn "环境变量 K8S_VERSION=${K8S_VERSION} 未作为目标版本；默认取新树表首 ${KUBE_MAX}。"
+    warn "  要保留当前线: --keep-k8s-line；要指定版本: --k8s-version ${K8S_VERSION}"
+fi
+
+if [ "${CHECK_ONLY}" = "1" ]; then
+    say "[4/8] --check: 只打印计划, 不换树、不写文件"
+    log "升级类型 : ${MODE}"
+    log "kubespray: ${OLD_VER} -> ${NEW_VER}"
+    log "k8s      : ${CUR_K8S:-未知} -> ${K8S_TARGET}"
+    log "可用线   : ${KUBE_LINES}"
+    log "将生成   : ${PROFILE_DIR}/${TAG}.profile"
+    log "版本目录 : ${OFFLINE_ROOT}/kubespray/${TAG}"
+    log "集群动作 : 无(本步骤只准备版本面；原地升级需 cubestack-offline.sh upgrade)"
+    exit 0
 fi
 
 # ---------------------------------------------------------------- [5/8] 换树
@@ -397,27 +487,121 @@ if [ "${APPLY_RC}" != 0 ] || [ "${N_CONF}" != 0 ]; then
     exit 1
 fi
 
-# ---------------------------------------------------------------- [8/8] 后续人工步骤
-say "[8/8] 后续人工步骤(脚本不代劳, SOP 5/7/8/9)"
-K8S_HINT=""
-[ "${K8S_FROM_ENV}" = 1 ] && K8S_HINT="$(printf '\n     - !! 环境变量只是本次声明: 务必把新钉子写进 cluster.conf 与 cluster.conf.example')"
+# ---------------------------------------------------------------- [8/8] 版本面与版本目录 + 后续人工步骤
+say "[8/8] 版本面与版本目录(自动; 不动物理集群)"
+
+PROFILE_TMP="$(mktemp)"
+PROFILE_OK=0
+if [ -x "${ROOT}/cubestack-patch-apply.sh" ]; then
+    if OFFLINE_FILES_ROOT="${OFFLINE_ROOT}" bash "${SELF_DIR}/cubestack-version-dir.sh" \
+        profile "${TAG}" --from-root "${ROOT}" --k8s-version "${K8S_TARGET}" --out "${PROFILE_TMP}" \
+        >/tmp/cubestack-profile.log 2>&1; then
+        PROFILE_OK=1
+        log "已推导版本面: ${PROFILE_TMP}"
+    else
+        warn "版本面推导失败(见下); 跳过自动 profile:"
+        sed 's/^/     /' /tmp/cubestack-profile.log >&2 || true
+    fi
+else
+    warn "${ROOT} 下无 cubestack-patch-apply.sh(演练根?) → 跳过自动 profile/版本目录"
+fi
+
+if [ "${PROFILE_OK}" = "1" ]; then
+    # 1) 写仓库 profile
+    if mkdir -p "${PROFILE_DIR}" && cp "${PROFILE_TMP}" "${PROFILE_DIR}/${TAG}.profile"; then
+        log "已写 profile: ${PROFILE_DIR}/${TAG}.profile"
+    else
+        warn "写 profile 失败: ${PROFILE_DIR}/${TAG}.profile"
+    fi
+
+    # 2) 版本目录(阶段 2: 旧版本目录存在时复制未变资产, 只补变化项)
+    VER_DIR="${OFFLINE_ROOT}/kubespray/${TAG}"
+    OLD_VDIR="${OFFLINE_ROOT}/kubespray/v${OLD_VER}"
+    if [ -e "${VER_DIR}" ] && [ "${FORCE_VERSION_DIR}" != "1" ]; then
+        warn "版本目录已存在, 跳过创建: ${VER_DIR}(要重建加 --force-version-dir)"
+        OFFLINE_FILES_ROOT="${OFFLINE_ROOT}" bash "${SELF_DIR}/cubestack-version-dir.sh" \
+            check-assets "${TAG}" || warn "制品不齐(见上); 补齐后再发布"
+    else
+        NEW_ARGS=()
+        [ "${FORCE_VERSION_DIR}" = "1" ] && NEW_ARGS+=(--force)
+        VD_CMD=()
+        if [ -d "${OLD_VDIR}" ]; then
+            log "以旧版本目录为基线刷新(复制未变资产): ${OLD_VDIR}"
+            VD_CMD=(refresh "${TAG}" --from-root "${ROOT}" --assets-from "${OLD_VDIR}" --k8s-version "${K8S_TARGET}")
+        else
+            VD_CMD=(new "${TAG}" --from-root "${ROOT}" --k8s-version "${K8S_TARGET}")
+        fi
+        if ! OFFLINE_FILES_ROOT="${OFFLINE_ROOT}" bash "${SELF_DIR}/cubestack-version-dir.sh" \
+            "${VD_CMD[@]}" "${NEW_ARGS[@]}"; then
+            warn "版本目录创建/刷新失败: ${VER_DIR}"
+        else
+            log "版本目录: ${VER_DIR}"
+            if [ "${VD_CMD[0]}" = "new" ]; then
+                OFFLINE_FILES_ROOT="${OFFLINE_ROOT}" bash "${SELF_DIR}/cubestack-version-dir.sh" \
+                    check-assets "${TAG}" || warn "制品不齐(见上); 补齐后再发布"
+            fi
+        fi
+    fi
+
+    # 3) 版本面变化(便于阶段 2 备料)
+    OLD_PROFILE="${PROFILE_DIR}/v${OLD_VER}.profile"
+    if [ -f "${OLD_PROFILE}" ]; then
+        log "版本面变化(旧 v${OLD_VER} -> 新 ${TAG}):"
+        while IFS='=' read -r k v; do
+            case "${k}" in ''|\#*) continue;; esac
+            old="$(grep -m1 -E "^${k}=" "${OLD_PROFILE}" | cut -d= -f2- || true)"
+            [ -n "${old}" ] && [ "${old}" != "${v}" ] && printf '     %-28s %s -> %s\n' "${k}" "${old}" "${v}"
+        done < <(grep -E '^[A-Z][A-Z0-9_]*=' "${PROFILE_TMP}")
+        printf '     %s\n' "→ 阶段 2: 按该版本目录补齐/替换镜像与二进制；本步骤不动物理集群。"
+    fi
+
+    # 4) 可选: 更新 cluster.defaults.conf + inventory 钉子
+    if [ "${SET_DEFAULT}" = "1" ]; then
+        if [ -f "${DEFAULTS_CONF}" ]; then
+            while IFS='=' read -r k v; do
+                case "${k}" in ''|\#*) continue;; esac
+                grep -qE "^${k}=\"" "${DEFAULTS_CONF}" || continue
+                sed -i -E "s|^(${k}=\"\\\$\\{${k}:-)[^}]*(\}\")|\1${v}\2|" "${DEFAULTS_CONF}"
+            done < <(grep -E '^[A-Z][A-Z0-9_]*=' "${PROFILE_TMP}")
+            log "已更新 ${DEFAULTS_CONF}(--set-default)"
+            if [ "${ROOT}" != "${SELF_DIR}" ]; then
+                warn "--set-default: 演练根(ROOT != SELF_DIR)不执行仓库 inventory 同步；仅更新了 ${DEFAULTS_CONF}"
+            elif [ -f "${CONF}" ]; then
+                if bash "${SELF_DIR}/../scripts/tools/k8s/sync-kubespray-config.sh"; then
+                    log "已重新生成 inventory 钉子"
+                else
+                    warn "inventory 钉子同步失败；请手动跑: bash deployments/scripts/tools/k8s/sync-kubespray-config.sh"
+                fi
+            else
+                warn "未找到 ${CONF}；跳过 inventory 钉子同步(部署前需要 cluster.conf)"
+            fi
+        else
+            warn "未找到 ${DEFAULTS_CONF}"
+        fi
+    else
+        log "未加 --set-default: ${DEFAULTS_CONF} 与 inventory 钉子未改"
+        log "  确认后重跑: $0 ${TAG} --set-default (或手工把上面的版本面变化落进 defaults/inventory)"
+    fi
+fi
+rm -f "${PROFILE_TMP}"
+
+say "[8/8] 后续人工步骤(SOP 5/7/8/9)"
+SET_DEFAULT_HINT="若未加 --set-default: 把上面的版本面变化写进 cluster.defaults.conf + inventory 钉子"
+[ "${SET_DEFAULT}" = "1" ] && SET_DEFAULT_HINT="已按 --set-default 更新 defaults；inventory 钉子请确认"
 cat <<EOF
-  1) 版本面(SOP 7): 核 cluster.conf 的钉子 vs ${TAG} 上游表值
-     - 本次核验用的 k8s 钉子 = ${K8S_REQ}(来源: ${K8S_FROM})${K8S_HINT}
-     - check-modules 的版本一致性断言(⑯)落地后会自动报差异
+  1) 版本面(SOP 7): 本次目标 k8s = ${K8S_TARGET}(来源: ${K8S_FROM})
+     - profile: ${PROFILE_DIR}/${TAG}.profile
+     - ${SET_DEFAULT_HINT}
   2) 渲染器对拍(SOP 8): 自持 manifest 渲染器 vs 新树模板(kube-vip 等)
-  3) 离线缺口(SOP 8): images.manifest 新镜像 / offline-files 备料(k8s_deploy 前必须补齐)
+  3) 离线缺口(SOP 8): 按版本面变化补齐/替换镜像与二进制(阶段 2)
   4) 回归(SOP 8): 静态检查 + 补丁 --check + 树 diff + 实机
-     - 树 diff:  diff -rq --no-dereference ${TREE} ${TREE_SRC}     # --no-dereference: 树内相对符号链接(指向 inventory/)不跟着展开
-       (预期只剩: ${N_PATCH} 个补丁的目标文件(清单见 cubestack-patches/README.md)+ 保留的 inventory/local + 剔除的顶层点文件)
+     - 树 diff:  diff -rq --no-dereference ${TREE} ${TREE_SRC}
   5) 记录(SOP 9): 在 docs/kubespray-upgrade.md 追加一条(旧→新 tag、k8s/插件版本变化、
      冲突与处置、踩的坑、新增的可上游化补丁)
   6) 换树结果**落盘**(仅当树在 git 仓库内): git add -A <部署根> && git commit —— 否则下一次
      运行会被 [1/8] 的工作区门挡住(换树改写了成千上万个已跟踪文件)。⚠ 范围是**整个部署根**
      (仓库内 = deployments/kubespray), **不只是树**: 冲突处置改的 cubestack-patches/*.patch
-     在树外, 漏了就白改。保留项 = inventory/local + patch-playbooks + .venv/: 实盘 inventory 在
-     本仓库树外(deployments/kubespray/inventory/cubestack-cluster); 若某环境把实盘 inventory
-     放在树内其它路径, 换树前自行备份。
+     在树外, 漏了就白改。
   详见 docs/kubespray-upgrade.md §8
 EOF
 if [ -n "${REPO}" ]; then
@@ -425,9 +609,11 @@ if [ -n "${REPO}" ]; then
     rerun_hint
 fi
 
-say "完成: ${OLD_VER} → ${NEW_VER}(换树 + 退休判定 + 重放全绿)"
+say "完成: ${OLD_VER} → ${NEW_VER}(${MODE}; 目标 k8s ${K8S_TARGET}; 换树 + 退休判定 + 重放全绿)"
 printf '  树: %s\n  旧树指纹: %s\n  新树指纹: %s\n  备份 tag: %s\n' \
     "${TREE}" "${OLD_FP}" "$(tree_fingerprint "${TREE}")" "${BACKUP_TAG:-"(无 git 仓库, 未打)"}"
+printf '  目标 k8s: %s(%s); profile: %s/%s.profile\n' \
+    "${K8S_TARGET}" "${K8S_FROM}" "${PROFILE_DIR}" "${TAG}"
 printf '  补丁: APPLY %s / SKIP %s / CONFLICT %s; 退休判定 RETIRE %s / KEEP %s\n' \
     "${N_APPLY}" "${N_SKIP}" "${N_CONF}" "${N_RETIRE}" "${N_KEEP}"
 exit 0
