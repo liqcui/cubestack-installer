@@ -50,8 +50,8 @@ chk "无 ansible ping -u" "0" \
     "$(code_count 'ansible[[:space:]]+all[[:space:]].*-m[[:space:]]+ping.*-u[[:space:]]' "${OFFLINE}")"
 
 echo "== ④ 组级兜底仍写进 group_vars/all/ =="
-chk "offline.yml 赋值(install + scale)" "2" \
-    "$(code_count 'OFFLINE_VARS="\$\{INVENTORY_DIR\}/group_vars/all/offline\.yml"' "${OFFLINE}")"
+chk "offline.yml 写入(install + upgrade 共用 write_offline_vars)" "2" \
+    "$(code_count '^[[:space:]]*write_offline_vars$' "${OFFLINE}")"
 chk "offline.yml 仍含 ansible_user 兜底" "2" \
     "$(code_count '^[[:space:]]*echo "ansible_user: \\"\$\{REMOTE_USER\}\\""' "${OFFLINE}")"
 
