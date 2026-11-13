@@ -1,8 +1,45 @@
-# 集群原地升级(upgrade)—— 接口预留 + 设计伪代码(未实现)
+# 集群原地升级(upgrade)—— 已实现(阶段 3)
 
-> **状态:未实现,仅预留接口与设计。** 2026-09-28 用户定案:"`--fresh` 是覆盖安装;升级作为未来的新 feature,
-> 可以预留出接口或者伪代码"。
-> 本文是该 feature 的设计草案,实现前不要对外承诺。
+> **状态:已实现(2026-11-13)。** 入口:`cubestack-offline.sh upgrade` / `deploy-cluster.sh --upgrade`。
+> 覆盖安装(`reset` + 全量部署)仍然保留;两条路径互不影响。
+
+## 0. 已实现用法
+
+```bash
+# dry-run(默认): 打印当前/目标版本、阶梯、etcd、健康检查、备份要求
+sudo ./deployments/scripts/deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5
+
+# 执行: 必须有 etcd 快照(默认自动在首 master 创建) + 节点/VM 快照
+sudo ./deployments/scripts/deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5 --yes \
+  --node-snapshot <vm-snapshot-id> [--serial 1] [--etcd-snapshot /var/backups/...db]
+
+# 裸金属没有 VM 快照时(回滚 = etcd 恢复 + 节点重建)
+sudo ./deployments/scripts/deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5 --yes \
+  --accept-node-rebuild
+
+# 直接调底层入口
+sudo ./deployments/kubespray/cubestack-offline.sh upgrade cubestack-cluster \
+  --to v1.36.5 --check
+```
+
+> ⚠ **release 模式**: 如果 `OFFLINE_FILES_ROOT` 下有 `release.env`，`load_config` 会自动进入
+> release 模式并用 release 的版本档案覆盖 `--profile`。`deploy-cluster.sh --upgrade` 会明确报错
+> （"升级目标档案被 release 模式覆盖"）；升级请用**非 release** 的 `OFFLINE_FILES_ROOT`，或准备
+> 包含目标版本的新 release。
+
+实现边界(与上游一致):
+
+- **一次只升一个小版本**:1.35.8 → 1.36.5 可以;1.34.x → 1.36.x 拒绝,要求先准备中间 bundle 分步执行;
+- **不支持降级**;回滚依赖 etcd 快照 + 节点/VM 快照(或节点重建);
+- **etcd 3.5(<3.5.26) → 3.6 桥接未实现**;遇到会直接拒绝,要求先手工升级 etcd 到 ≥3.5.26;
+- 升级会随目标 profile 一起移动 etcd/containerd/CNI/K8s 组件版本;
+- 默认 `serial=1`(最保守),可用 `--serial N|N%` 调整;
+- 升级后自动做 `/healthz`、节点 Ready、kube-system Pod、etcd endpoint health 检查;
+- 状态文件 `inventory/<cluster>/.upgrade.state` 记录 `from/to/快照/phase`,成功后可删除。
+
+## 0.1 历史设计(保留)
+
+> 以下为 2026-09-28 的设计草案,接口已按上面落地;文中"未实现"字样仅表示当时的背景。
 
 ## 0. 为什么不能"重跑一遍"就当升级
 

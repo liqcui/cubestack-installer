@@ -190,7 +190,7 @@ cubestack-offline.sh upgrade <cluster> --to <k8s-ver> [--check] [--yes]
 |---|---|---|
 | **1（已实现）** | 最高版本选择器 + 两类升级判定 + 自动推导 profile/版本目录 + 默认值更新 | 否 |
 | **2（已实现）** | 版本目录刷新（复制未变资产）+ 制品完整性校验 + MinIO/Harbor 变化项发布 | 否 |
-| **3** | Kubernetes 原地升级（`cubestack-offline.sh upgrade`）+ 健康检查/回滚 | 是（lab） |
+| **3（已实现；待 lab 验收）** | Kubernetes 原地升级（`cubestack-offline.sh upgrade`）+ 健康检查/回滚 | 是（lab） |
 | **4** | 文档/CI（可选） | 否 |
 
 > **阶段 1 实现说明（2026-11-13）**：`lib-kubespray-tables.sh` 增加 `kb_tables_kubelet_max` /
@@ -205,6 +205,12 @@ cubestack-offline.sh upgrade <cluster> --to <k8s-ver> [--check] [--yes]
 > 升级脚本 [8/8] 在旧版本目录存在时自动 `refresh`，并输出缺件清单与补齐/发布命令。
 > 镜像工具在 `KUBESPRAY_VERSION`/`KUBESPRAY_PROFILE` 下自动加载对应 profile，避免用仓库旧
 > defaults 同步出旧 tag。
+>
+> **阶段 3 实现说明（2026-11-13）**：`cubestack-offline.sh upgrade`（默认 dry-run；预检/阶梯/
+> etcd 桥判定/健康检查/etcd 快照/状态文件/`upgrade-cluster.yml`）、`deploy-cluster.sh --upgrade`
+> （直接转底层入口，跳过常规模块与 reset）、`06_k8s_deploy.sh` / `cmd_install` 的升级模式 reset
+> 守卫、`lib-k8s-upgrade.sh` 纯函数与 `test-k8s-upgrade-plan.sh` 回归。限制：一次一个小版本、
+> 不支持降级、etcd 3.5→3.6 桥未实现。
 
 ---
 

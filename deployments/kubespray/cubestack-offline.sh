@@ -4,6 +4,10 @@ set -euo pipefail
 # 自动检测: 脚本所在目录 = deployments/kubespray/
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# 原地升级纯函数(版本阶梯 / etcd 桥判定)
+# shellcheck source=lib-k8s-upgrade.sh
+source "${SCRIPT_DIR}/lib-k8s-upgrade.sh"
+
 # 运行根与布局(2026-09-30 起**不再靠父目录名判定** —— 物化版本树的父目录名不叫 deployments,
 #   旧判据会让它在物化后静默走错目录; 见 docs/kubespray-versioning/design.md §5.3):
 #   CUBESTACK_BASE_DIR  运行根(默认 = 脚本目录; 物化版本时 = deployments/kubespray/versions/<版本>)
@@ -174,10 +178,19 @@ usage() {
     echo "  download   [名称]           下载离线资源（使用 download-hosts.yml，本地 root）"
     echo "  install    [名称] [选项]    执行集群安装（使用 hosts.yml，各节点用户按 ansible_user）"
     echo "  reset      [名称] --yes     清除目标节点上的旧集群状态（覆盖安装的前置步骤; 见下）"
+    echo "  upgrade    [名称] [选项]    原地升级已有集群（kubespray upgrade-cluster.yml; 默认 dry-run）"
     echo "  scale      [名称] [选项]    扩容集群 — 添加新节点到已有集群"
     echo "  check      [名称]           预检资源与连通性"
     echo "  paths      [名称]           只读: 打印全部路径推导(版本/资产目录/树/inventory; 排障用)"
-    echo "  # upgrade  [名称] [选项]    (未实现) 原地升级到新版本 —— 设计见 docs/cluster-upgrade-path.md"
+    echo ""
+    echo "upgrade 选项:"
+    echo "  --to <ver>             目标 Kubernetes（必须等于目标 bundle profile 的 K8S_VERSION）"
+    echo "  --yes                  执行升级（默认只打印计划）"
+    echo "  --serial <N|N%>        worker 分批大小（默认 1，最保守）"
+    echo "  --etcd-snapshot <path> 使用已有 etcd 快照（默认在首 master 自动创建）"
+    echo "  --node-snapshot <id>   记录节点/VM 快照（与 --accept-node-rebuild 二选一）"
+    echo "  --accept-node-rebuild  裸金属无 VM 快照时显式接受“回滚=etcd恢复+节点重建”"
+    echo "  --check                只做预检（等同默认 dry-run）"
     echo ""
     echo "选项:"
     echo "  --limit <group>   限制目标组，可选值:"
@@ -188,6 +201,8 @@ usage() {
     echo "示例:"
     echo "  $0 install mycluster --limit kube_control_plane   # 仅部署 master"
     echo "  $0 install mycluster --limit kube_node            # 仅部署 worker"
+    echo "  $0 upgrade mycluster --to v1.36.5                  # 原地升级 dry-run"
+    echo "  $0 upgrade mycluster --to v1.36.5 --yes --node-snapshot <id>  # 执行"
     echo "  $0 scale   mycluster --limit kube_node            # 扩容加入新 worker"
     echo "  $0 scale   mycluster --limit kube_control_plane   # 扩容加入新 master"
     exit 0
@@ -245,7 +260,8 @@ verify_tree_tar_sidecar() {   # <version-dir>
         warn "缺少 ${side}; 跳过 tree.tar.gz 校验(开发树常见)"
         return 0
     fi
-    want="$(tr -d '[:space:]' < "${side}")"
+    # 边车格式兼容两种: "<sha>" 与 "<sha>  tree.tar.gz"(_pack_tree 写的是后者)。
+    want="$(awk 'NR==1{print $1}' "${side}" 2>/dev/null)"
     got="$(sha256sum "${tar}" | awk '{print $1}')"
     if [ "${want,,}" != "${got,,}" ]; then
         err "tree.tar.gz 校验失败: 期望 ${want} 实际 ${got}"
@@ -2254,23 +2270,14 @@ print("%s|%s|%s" % (
     return 0
 }
 
-cmd_install() {
-    highlight "安装集群 [${CLUSTER_NAME}]..."
-    ensure_kubespray
-    ensure_venv
-    cmd_check
-    # 依据 hosts.yml 自动同步 all.yml 的 API 负载均衡/SAN 配置
-    update_loadbalancer_all_yml
-    # 部署前: 检查并重置旧 Kubernetes 状态(检测到残留/第三方 K8s/10250 被占 才清理;
-    # 全新部署覆盖全部节点)。清理后仍被占 → 立刻中止: 否则要等 20 分钟后 kubespray 在
-    # join 阶段才报 [ERROR Port-10250], 报错点离真因隔了一整个 playbook(2026-09-23 事故)
-    reset_kubernetes_if_needed all \
-        || err "节点 10250 端口清理未通过(元凶见上方输出), 已中止部署"
-    log "注入离线安装变量..."
+# 写 inventory/group_vars/all/offline.yml(install 与 upgrade 共用)
+write_offline_vars() {
+    local offline_vars="${INVENTORY_DIR}/group_vars/all/offline.yml"
+    log "注入离线变量: ${offline_vars}"
+    mkdir -p "$(dirname "${offline_vars}")"
     # ⚠ 本文件位于 ${INVENTORY_DIR}/group_vars/all/offline.yml, **作为 group_vars 自动加载**;
     #   不要再给 ansible-playbook 加 `-e @${OFFLINE_VARS}`: extra vars 优先级高于 hosts.yml
     #   的 host vars, 会把 NODES 逐行 ansible_user(root/ubuntu 混用)压成单一全局用户。
-    OFFLINE_VARS="${INVENTORY_DIR}/group_vars/all/offline.yml"
     {
         echo "---"
         echo "# 离线安装变量（由 cubestack-offline.sh 自动生成）"
@@ -2305,7 +2312,26 @@ cmd_install() {
         echo ""
         echo "## 离线环境 API server 冷启动慢, 加大 kubeadm init 等待超时(默认300s)"
         echo "kubeadm_init_timeout: 900s"
-    } > "${OFFLINE_VARS}"
+    } > "${offline_vars}"
+}
+
+cmd_install() {
+    highlight "安装集群 [${CLUSTER_NAME}]..."
+    ensure_kubespray
+    ensure_venv
+    cmd_check
+    # 依据 hosts.yml 自动同步 all.yml 的 API 负载均衡/SAN 配置
+    update_loadbalancer_all_yml
+    # 部署前: 检查并重置旧 Kubernetes 状态(检测到残留/第三方 K8s/10250 被占 才清理;
+    # 全新部署覆盖全部节点)。清理后仍被占 → 立刻中止: 否则要等 20 分钟后 kubespray 在
+    # join 阶段才报 [ERROR Port-10250], 报错点离真因隔了一整个 playbook(2026-09-23 事故)
+    if [ "${CUBESTACK_UPGRADE:-0}" = "1" ]; then
+        log "CUBESTACK_UPGRADE=1: 跳过覆盖安装 reset(原地升级请用 upgrade 命令)"
+    else
+        reset_kubernetes_if_needed all \
+            || err "节点 10250 端口清理未通过(元凶见上方输出), 已中止部署"
+    fi
+    write_offline_vars
 
     # 生成镜像文件清单(inventory/preload-images.lst), 供 cluster.yml 内置预加载 play 使用
     # (实际同步+加载由 cluster.yml 在 containerd 安装完成后完成;
@@ -2663,6 +2689,15 @@ LIMIT_GROUP=""
 COMMAND=""
 CLUSTER_ARG=""
 RESET_YES=0
+# 原地升级选项
+UPGRADE_TO=""
+UPGRADE_SERIAL="1"
+UPGRADE_ETCD_SNAPSHOT=""
+UPGRADE_NODE_SNAPSHOT=""
+UPGRADE_ACCEPT_NODE_REBUILD=0
+UPGRADE_ETCD_BRIDGE=""
+UPGRADE_YES=0
+UPGRADE_CHECK=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -2672,8 +2707,42 @@ while [ $# -gt 0 ]; do
             shift 2
             ;;
         --yes|-y)
-            # 仅供 reset 使用: 显式确认"清空旧集群"
+            # reset / upgrade 的显式确认
             RESET_YES=1
+            UPGRADE_YES=1
+            shift
+            ;;
+        --to)
+            [ -z "${2:-}" ] && err "--to 需要目标 Kubernetes 版本(如 v1.36.5)"
+            UPGRADE_TO="$2"
+            shift 2
+            ;;
+        --serial)
+            [ -z "${2:-}" ] && err "--serial 需要值(如 1 / 20%)"
+            UPGRADE_SERIAL="$2"
+            shift 2
+            ;;
+        --etcd-snapshot)
+            [ -z "${2:-}" ] && err "--etcd-snapshot 需要路径"
+            UPGRADE_ETCD_SNAPSHOT="$2"
+            shift 2
+            ;;
+        --node-snapshot)
+            [ -z "${2:-}" ] && err "--node-snapshot 需要 id/路径"
+            UPGRADE_NODE_SNAPSHOT="$2"
+            shift 2
+            ;;
+        --accept-node-rebuild)
+            UPGRADE_ACCEPT_NODE_REBUILD=1
+            shift
+            ;;
+        --etcd-bridge)
+            [ -z "${2:-}" ] && err "--etcd-bridge 需要版本(如 3.5.33)"
+            UPGRADE_ETCD_BRIDGE="$2"
+            shift 2
+            ;;
+        --check)
+            UPGRADE_CHECK=1
             shift
             ;;
         --help|-h)
@@ -2749,6 +2818,260 @@ export PRELOAD_IMAGE_PATTERNS
 # 构建 ansible-playbook 通用 limit 参数
 LIMIT_FLAG=""
 [ -n "$LIMIT_GROUP" ] && LIMIT_FLAG="--limit ${LIMIT_GROUP}"
+
+# ============================================================
+# 命令: upgrade —— 原地升级已有集群(转调上游 upgrade-cluster.yml)
+# ------------------------------------------------------------
+# 约束(与 kubespray 一致):
+#   · 一次只升一个小版本(patch 升级同一小版本内允许); 不支持降级
+#   · 目标 bundle 必须是已准备的版本目录(KUBESPRAY_VERSION / --profile)
+#   · etcd 3.5(<3.5.26) -> 3.6 桥接未实现, 需先手工桥接
+#   · 默认 dry-run; --yes 才执行; 执行前必须有 etcd 快照
+# ============================================================
+
+_first_master_conn() {
+    ansible-inventory -i "${INVENTORY_DIR}/hosts.yml" --list 2>/dev/null | python3 -c '
+import sys, json
+inv = json.load(sys.stdin)
+meta = inv.get("_meta", {}).get("hostvars", {})
+cp = inv.get("kube_control_plane", {}).get("hosts", [])
+if not cp:
+    sys.exit(0)
+hv = meta.get(cp[0], {})
+print("%s|%s|%s" % (
+    hv.get("ansible_host", cp[0]),
+    hv.get("ansible_user", ""),
+    hv.get("ansible_ssh_private_key_file", "~/.ssh/cubestack_k8s"),
+))' 2>/dev/null || true
+}
+
+_ssh_master() {   # <remote command string>
+    local conn host user key
+    conn="$(_first_master_conn)" || true
+    [ -n "${conn}" ] || return 1
+    IFS='|' read -r host user key <<< "${conn}"
+    [ -n "${host}" ] && [ -n "${user}" ] || return 1
+    ssh -i "${key/#\~/${HOME}}" \
+        -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=8 \
+        "${user}@${host}" "$1"
+}
+
+_current_k8s_version() {
+    local v=""
+    v="$(_ssh_master "sudo grep -m1 -o 'kube-apiserver:v[0-9.]*' /etc/kubernetes/manifests/kube-apiserver.yaml 2>/dev/null | head -1 | sed 's/.*:v//'" 2>/dev/null || true)"
+    [ -n "${v}" ] || v="$(_ssh_master "sudo kubeadm version -o short 2>/dev/null | head -1 | sed 's/^v//'" 2>/dev/null || true)"
+    printf '%s' "${v}"
+}
+
+_current_etcd_version() {
+    _ssh_master "sudo /usr/local/bin/etcd --version 2>/dev/null | head -1 | sed -E 's/.*Version: ([0-9.]+).*/\1/'" 2>/dev/null || true
+}
+
+_upgrade_profile_file() {
+    local p="${SCRIPT_DIR}/../config/profiles/${KUBESPRAY_VERSION}.profile"
+    [ -f "${p}" ] || p="${LOCAL_REPO_DIR}/VERSION.profile"
+    [ -f "${p}" ] && printf '%s' "${p}"
+}
+
+_upgrade_profile_get() { grep -m1 -E "^$2=" "$1" 2>/dev/null | cut -d= -f2-; }
+
+_upgrade_health_check() {   # 0=healthy
+    local rc=0 out
+    out="$(_ssh_master "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf get --raw=/healthz 2>/dev/null" 2>/dev/null || true)"
+    if [ "${out}" != "ok" ]; then warn "apiserver /healthz = ${out:-<空>}"; rc=1; fi
+
+    local notready
+    notready="$(_ssh_master "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes --no-headers 2>/dev/null | awk '\$2!=\"Ready\"{print \$1\":\"\$2}'" 2>/dev/null || true)"
+    [ -n "${notready}" ] && { warn "非 Ready 节点: ${notready}"; rc=1; }
+
+    local badpods
+    badpods="$(_ssh_master "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf -n kube-system get pods --no-headers 2>/dev/null | grep -vE 'Running|Completed' | head -10" 2>/dev/null || true)"
+    [ -n "${badpods}" ] && { warn "kube-system 异常 Pod:"; printf '%s\n' "${badpods}" | sed 's/^/      /' >&2; rc=1; }
+
+    # etcd health(best effort; kubespray 默认证书路径)
+    local etcdout
+    etcdout="$(_ssh_master "sudo env ETCDCTL_API=3 /usr/local/bin/etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key endpoint health 2>/dev/null" 2>/dev/null || true)"
+    if [ -z "${etcdout}" ]; then
+        warn "etcd endpoint health 未取到(证书路径不同?) —— 请人工确认 etcd 健康"
+    elif printf '%s' "${etcdout}" | grep -qi 'unhealthy'; then
+        warn "etcd 不健康: ${etcdout}"; rc=1
+    fi
+    return "${rc}"
+}
+
+_upgrade_take_etcd_snapshot() {
+    local snap="${UPGRADE_ETCD_SNAPSHOT}"
+    if [ -n "${snap}" ]; then
+        if _ssh_master "sudo test -s '${snap}'" 2>/dev/null; then
+            log "使用指定的 etcd 快照(master): ${snap}"
+            printf '%s' "${snap}"; return 0
+        fi
+        if [ -s "${snap}" ]; then
+            log "使用指定的本地 etcd 快照: ${snap}(注意: 恢复时需在 master 可用)"
+            printf '%s' "${snap}"; return 0
+        fi
+        err "指定的 etcd 快照不存在或为空: ${snap}"
+    fi
+    snap="/var/backups/etcd-${CLUSTER_NAME}-$(date +%Y%m%d%H%M%S).db"
+    log "在首个 master 创建 etcd 快照: ${snap}"
+    _ssh_master "sudo mkdir -p /var/backups && sudo env ETCDCTL_API=3 /usr/local/bin/etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save '${snap}' >/dev/null && sudo test -s '${snap}'" \
+        || err "etcd 快照失败(证书路径/磁盘?); 用 --etcd-snapshot 指定已有快照, 或先手工 etcdctl snapshot save"
+    printf '%s' "${snap}"
+}
+
+_upgrade_ansible_extra_vars() {   # <profile> → 填充 UPGRADE_EXTRA_VARS
+    local prof="$1" pair k m v
+    UPGRADE_EXTRA_VARS=()
+    local pairs=(
+        "K8S_VERSION:kube_version"
+        "PAUSE_VERSION:pod_infra_version"
+        "COREDNS_VERSION:coredns_version"
+        "DNS_NODE_CACHE_VERSION:nodelocaldns_version"
+        "ETCD_VERSION:etcd_version"
+        "CALICO_VERSION:calico_version"
+        "METRICS_SERVER_VERSION:metrics_server_version"
+        "CPA_VERSION:dnsautoscaler_version"
+        "LOCAL_VOLUME_PROVISIONER_VERSION:local_volume_provisioner_version"
+        "NFD_VERSION:node_feature_discovery_version"
+    )
+    for pair in "${pairs[@]}"; do
+        k="${pair%%:*}"; m="${pair#*:}"
+        v="$(_upgrade_profile_get "${prof}" "${k}")"
+        [ -n "${v}" ] || continue
+        UPGRADE_EXTRA_VARS+=(-e "${m}=${v#v}")
+    done
+}
+
+cmd_upgrade() {
+    highlight "原地升级集群 [${CLUSTER_NAME}] ..."
+    ensure_kubespray
+    ensure_venv
+
+    local prof; prof="$(_upgrade_profile_file)" || true
+    [ -n "${prof}" ] || err "找不到版本档案: ${SCRIPT_DIR}/../config/profiles/${KUBESPRAY_VERSION}.profile 或 ${LOCAL_REPO_DIR}/VERSION.profile"
+    log "目标 bundle: ${KUBESPRAY_VERSION}(profile: ${prof})"
+    log "资产目录: ${LOCAL_REPO_DIR}"
+
+    local prof_k8s; prof_k8s="$(_upgrade_profile_get "${prof}" K8S_VERSION)" || true
+    prof_k8s="${prof_k8s#v}"
+    local target="${UPGRADE_TO#v}"
+    [ -n "${target}" ] || target="${prof_k8s}"
+    [ -n "${target}" ] || err "读不到目标 K8S_VERSION(profile 缺 K8S_VERSION)"
+    [ "${target}" = "${prof_k8s}" ] || err "目标 k8s ${target} != 目标 bundle profile 的 K8S_VERSION=${prof_k8s}; 请准备对应版本 bundle 后重试"
+
+    local chk="${KUBESPRAY_DIR}/roles/kubespray_defaults/vars/main/checksums.yml"
+    [ -f "${chk}" ] || err "目标树缺 ${chk}"
+    source "${SCRIPT_DIR}/lib-kubespray-tables.sh"
+    [ "$(kb_tables_kubelet_has "${chk}" "${target}")" = "1" ] \
+        || err "目标 k8s ${target} 不在 ${KUBESPRAY_VERSION} 的 kubelet_checksums 表内"
+
+    # 目标制品必须齐全(否则 upgrade 途中会缺镜像/二进制)
+    if ! OFFLINE_FILES_ROOT="${OFFLINE_FILES_ROOT}" bash "${SCRIPT_DIR}/cubestack-version-dir.sh" \
+        check-assets "${KUBESPRAY_VERSION}" >/dev/null 2>&1; then
+        if [ "${UPGRADE_YES}" = "1" ]; then
+            err "目标版本目录制品不齐; 先补齐: OFFLINE_FILES_ROOT=${OFFLINE_FILES_ROOT} bash deployments/kubespray/cubestack-version-dir.sh check-assets ${KUBESPRAY_VERSION}"
+        else
+            warn "目标版本目录制品不齐(见上); --yes 执行前请先补齐"
+        fi
+    else
+        log "✅ 目标版本目录制品齐全"
+    fi
+
+    local current; current="$(_current_k8s_version)"
+    [ -n "${current}" ] || err "读不到当前集群 apiserver 版本(SSH/集群不可达?)"
+    log "当前 k8s: ${current} -> 目标 k8s: ${target}"
+
+    local plan prc=0
+    plan="$(upgrade_plan "${current}" "${target}")" || prc=$?
+    case "${plan}" in
+        SAME)
+            log "集群已经是 ${target}, 无需升级"; return 0 ;;
+        OK:*) ;;
+        *)
+            err "升级计划不可行: ${plan#ERR:}(一次只允许一个小版本, 不支持降级/跨大版本)" ;;
+    esac
+    [ "${prc}" = "0" ] || err "升级计划不可行: ${plan}"
+
+    local cur_etcd tgt_etcd
+    cur_etcd="$(_current_etcd_version)"
+    tgt_etcd="$(_upgrade_profile_get "${prof}" ETCD_VERSION)" || true
+    tgt_etcd="${tgt_etcd#v}"
+    log "etcd: ${cur_etcd:-未知} -> ${tgt_etcd:-未知}"
+    if [ "$(upgrade_etcd_requires_bridge "${cur_etcd}" "${tgt_etcd}")" = "1" ]; then
+        [ -n "${UPGRADE_ETCD_BRIDGE}" ] && err "etcd 桥接(--etcd-bridge ${UPGRADE_ETCD_BRIDGE})尚未实现; 请先手工升级 etcd 到 >=3.5.26"
+        err "etcd ${cur_etcd} -> ${tgt_etcd} 需要 3.5.26+ 桥接; 请先手工升级 etcd 到 >=3.5.26 再重试"
+    fi
+
+    if _upgrade_health_check; then
+        log "✅ 集群健康检查通过"
+    elif [ "${UPGRADE_YES}" = "1" ]; then
+        err "集群健康检查未通过; 先修复再升级"
+    else
+        warn "集群健康检查未通过(见上); --yes 前请先修复"
+    fi
+
+    log "升级计划:"
+    log "  bundle : ${KUBESPRAY_VERSION}"
+    log "  k8s    : ${current} -> ${target}"
+    log "  etcd   : ${cur_etcd:-未知} -> ${tgt_etcd:-未知}"
+    log "  serial : ${UPGRADE_SERIAL}"
+    log "  日志   : ${LOG_FILE:-/tmp/${CLUSTER_NAME}-upgrade.log}"
+
+    if [ "${UPGRADE_YES}" != "1" ]; then
+        log "dry-run: 未加 --yes, 不执行升级"
+        log "确认后执行: $0 upgrade ${CLUSTER_NAME} --to ${target} --yes [--serial N] [--etcd-snapshot PATH] [--node-snapshot ID | --accept-node-rebuild]"
+        return 0
+    fi
+
+    # 备份门: etcd 快照自动创建; 节点/VM 快照由环境提供
+    [ -n "${UPGRADE_NODE_SNAPSHOT}" ] || [ "${UPGRADE_ACCEPT_NODE_REBUILD}" = "1" ] \
+        || err "升级前需要节点/VM 快照: 加 --node-snapshot <id/path>, 或裸金属环境显式 --accept-node-rebuild(回滚=etcd恢复+节点重建)"
+    local snapshot; snapshot="$(_upgrade_take_etcd_snapshot)" || err "etcd 快照失败"
+    log "etcd 快照: ${snapshot}"
+    [ -n "${UPGRADE_NODE_SNAPSHOT}" ] && log "节点快照: ${UPGRADE_NODE_SNAPSHOT}"
+    [ "${UPGRADE_ACCEPT_NODE_REBUILD}" = "1" ] && warn "已接受无节点快照: 回滚需 etcd 恢复 + 节点重建"
+
+    local state="${INVENTORY_DIR}/.upgrade.state"
+    if [ -f "${state}" ] && grep -q '^phase=done' "${state}" 2>/dev/null && grep -qx "to=${target}" "${state}" 2>/dev/null; then
+        log "检测到已完成升级状态(${state}); 如需重跑请先删除该文件"; return 0
+    fi
+    {
+        echo "from=${current}"
+        echo "to=${target}"
+        echo "kubespray_version=${KUBESPRAY_VERSION}"
+        echo "etcd_snapshot=${snapshot}"
+        echo "node_snapshot=${UPGRADE_NODE_SNAPSHOT}"
+        echo "started_at=$(date -Is)"
+        echo "phase=running"
+    } > "${state}" || warn "无法写升级状态文件: ${state}"
+
+    write_offline_vars
+    fix_download_sync_dirs
+    fix_download_groups
+    _upgrade_ansible_extra_vars "${prof}"
+
+    local upgrade_log="${LOG_FILE:-/tmp/${CLUSTER_NAME}-upgrade.log}"
+    log "执行 Kubespray 原地升级: upgrade-cluster.yml (kube_version=${target})"
+    cd "${KUBESPRAY_DIR}"
+    run_ansible_playbook "${upgrade_log}" upgrade-cluster.yml \
+        -i "${INVENTORY_DIR}/hosts.yml" \
+        --become --become-user=root \
+        -e "serial=${UPGRADE_SERIAL}" \
+        "${UPGRADE_EXTRA_VARS[@]}" \
+        -vv || { warn "升级 playbook 失败; 回滚参考 etcd 快照: ${snapshot}"; err "升级失败, 日志: ${upgrade_log}"; }
+
+    log "升级后健康检查..."
+    if ! _upgrade_health_check; then
+        warn "升级后健康检查未通过; 请保留快照: ${snapshot}"
+        err "升级后健康检查失败, 日志: ${upgrade_log}"
+    fi
+    {
+        echo "phase=done"
+        echo "finished_at=$(date -Is)"
+    } >> "${state}" || true
+    log "🎉 集群 [${CLUSTER_NAME}] 原地升级完成: ${current} -> ${target}"
+    log "etcd 快照: ${snapshot}(确认稳定前请保留)"
+}
 
 # ============================================================
 # 命令: reset —— 清除目标节点上的**旧集群状态**(转调 kubespray reset.yml)
@@ -2880,6 +3203,12 @@ case "${COMMAND}" in
         [ -e "${LOG_FILE}" ] && { rm -f "${LOG_FILE}" 2>/dev/null || sudo rm -f "${LOG_FILE}" 2>/dev/null || true; }
         start_log_tee "${LOG_FILE}"
         cmd_install
+        ;;
+    upgrade)
+        LOG_FILE="/tmp/${CLUSTER_NAME}-upgrade.log"
+        [ -e "${LOG_FILE}" ] && { rm -f "${LOG_FILE}" 2>/dev/null || sudo rm -f "${LOG_FILE}" 2>/dev/null || true; }
+        start_log_tee "${LOG_FILE}"
+        cmd_upgrade
         ;;
     scale)
         LOG_FILE="/tmp/${CLUSTER_NAME}-scale.log"

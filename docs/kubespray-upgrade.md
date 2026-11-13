@@ -49,7 +49,29 @@ bash deployments/kubespray/cubestack-kubespray-upgrade.sh v2.32.1 \
 > 时用于识别当前线。要指定目标请用 `--k8s-version` / `--line`。
 >
 > ⚠ 同线刷新把 k8s 从 1.35 换到 1.36，对运行中的集群仍是一次 Kubernetes minor 升级；
-> 本脚本只准备版本面/版本目录，真正滚动集群需后续的 `cubestack-offline.sh upgrade`。
+> 本脚本只准备版本面/版本目录，真正滚动集群需下面的 `upgrade`。
+
+### 1.0.1 原地升级已有集群(阶段 3)
+
+```bash
+# dry-run: 打印当前/目标、阶梯、etcd、健康检查、备份要求
+sudo ./deployments/scripts/deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5
+
+# 执行: 需要 etcd 快照(默认自动创建) + 节点/VM 快照
+sudo ./deployments/scripts/deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5 --yes \
+  --node-snapshot <vm-snapshot-id>
+
+# 裸金属无 VM 快照: 显式接受“回滚=etcd恢复+节点重建”
+... --yes --accept-node-rebuild
+```
+
+边界：一次只升一个小版本；不支持降级；etcd 3.5(<3.5.26)→3.6 桥接未实现；默认 `serial=1`；
+升级后自动检查 `/healthz`、节点 Ready、kube-system Pod、etcd endpoint health。详见
+[`docs/cluster-upgrade-path.md`](cluster-upgrade-path.md)。
+
+> ⚠ 如果 `OFFLINE_FILES_ROOT` 下有 `release.env`，release 模式会覆盖 `--profile`；
+> `deploy-cluster.sh --upgrade` 会明确报错。升级请用非 release 的离线根，或准备包含目标版本的
+> 新 release。
 
 **版本目录刷新（阶段 2）**：如果旧版本目录存在，[8/8] 会以它为基线 `refresh`——复制未变的
 镜像/二进制/包，排除旧 `tree.tar.gz`/`VERSION.profile`/`README.md`，再打新树、推导新档案；
