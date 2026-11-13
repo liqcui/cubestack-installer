@@ -2875,6 +2875,22 @@ _upgrade_profile_file() {
 
 _upgrade_profile_get() { grep -m1 -E "^$2=" "$1" 2>/dev/null | cut -d= -f2-; }
 
+_etcd_tls_args() {   # 读取 /etc/etcd.env 的证书路径; fallback 到 kubeadm 路径
+    local ca cert key
+    ca="$(_ssh_master "sudo sed -n 's/^ETCD_TRUSTED_CA_FILE=//p' /etc/etcd.env 2>/dev/null" 2>/dev/null | head -1)"
+    cert="$(_ssh_master "sudo sed -n 's/^ETCD_CERT_FILE=//p' /etc/etcd.env 2>/dev/null" 2>/dev/null | head -1)"
+    key="$(_ssh_master "sudo sed -n 's/^ETCD_KEY_FILE=//p' /etc/etcd.env 2>/dev/null" 2>/dev/null | head -1)"
+    if [ -n "${ca}" ] && [ -n "${cert}" ] && [ -n "${key}" ]; then
+        printf -- "--cacert='%s' --cert='%s' --key='%s'" "${ca}" "${cert}" "${key}"
+        return 0
+    fi
+    if _ssh_master "sudo test -f /etc/kubernetes/pki/etcd/ca.crt" 2>/dev/null; then
+        printf -- "--cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key"
+        return 0
+    fi
+    return 1
+}
+
 _upgrade_health_check() {   # 0=healthy
     local rc=0 out
     out="$(_ssh_master "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf get --raw=/healthz 2>/dev/null" 2>/dev/null || true)"
@@ -2888,9 +2904,14 @@ _upgrade_health_check() {   # 0=healthy
     badpods="$(_ssh_master "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf -n kube-system get pods --no-headers 2>/dev/null | grep -vE 'Running|Completed' | head -10" 2>/dev/null || true)"
     [ -n "${badpods}" ] && { warn "kube-system 异常 Pod:"; printf '%s\n' "${badpods}" | sed 's/^/      /' >&2; rc=1; }
 
-    # etcd health(best effort; kubespray 默认证书路径)
-    local etcdout
-    etcdout="$(_ssh_master "sudo env ETCDCTL_API=3 /usr/local/bin/etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key endpoint health 2>/dev/null" 2>/dev/null || true)"
+    # etcd health: 证书路径从 /etc/etcd.env 读(kubespray 用 /etc/ssl/etcd/ssl, 不是 kubeadm 路径)
+    local tls etcdout
+    tls="$(_etcd_tls_args)" || true
+    if [ -n "${tls}" ]; then
+        etcdout="$(_ssh_master "sudo env ETCDCTL_API=3 /usr/local/bin/etcdctl --endpoints=https://127.0.0.1:2379 ${tls} endpoint health 2>/dev/null" 2>/dev/null || true)"
+    else
+        etcdout=""
+    fi
     if [ -z "${etcdout}" ]; then
         warn "etcd endpoint health 未取到(证书路径不同?) —— 请人工确认 etcd 健康"
     elif printf '%s' "${etcdout}" | grep -qi 'unhealthy'; then
@@ -2914,7 +2935,8 @@ _upgrade_take_etcd_snapshot() {
     fi
     snap="/var/backups/etcd-${CLUSTER_NAME}-$(date +%Y%m%d%H%M%S).db"
     log "在首个 master 创建 etcd 快照: ${snap}"
-    _ssh_master "sudo mkdir -p /var/backups && sudo env ETCDCTL_API=3 /usr/local/bin/etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save '${snap}' >/dev/null && sudo test -s '${snap}'" \
+    local tls; tls="$(_etcd_tls_args)" || err "读不到 etcd 证书路径(/etc/etcd.env 或 kubeadm 路径)"
+    _ssh_master "sudo mkdir -p /var/backups && sudo env ETCDCTL_API=3 /usr/local/bin/etcdctl --endpoints=https://127.0.0.1:2379 ${tls} snapshot save '${snap}' >/dev/null && sudo test -s '${snap}'" \
         || err "etcd 快照失败(证书路径/磁盘?); 用 --etcd-snapshot 指定已有快照, 或先手工 etcdctl snapshot save"
     printf '%s' "${snap}"
 }
