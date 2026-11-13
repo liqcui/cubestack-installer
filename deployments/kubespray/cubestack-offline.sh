@@ -3081,7 +3081,9 @@ cmd_upgrade() {
         UPGRADE_EXTRA_VARS+=(
             -e "drain_retries=1"
             -e "drain_retry_delay_seconds=5"
-            -e "drain_fallback_enabled=true"
+            # ⚠ ansible-core 2.19: when 条件必须是布尔; `-e drain_fallback_enabled=true`
+            #   是字符串, 会报 "Conditionals must have a boolean result" —— 用 JSON 传布尔。
+            -e '{"drain_fallback_enabled": true}'
             -e "drain_fallback_retries=3"
             -e "drain_fallback_timeout=360s"
         )
