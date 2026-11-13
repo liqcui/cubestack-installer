@@ -223,11 +223,15 @@ fi
 #   ② kubeadm 不允许跨小版本(1.32→1.35)。
 #   工具行为: 无残留 → 直接过; 有残留 → 打印将清除什么 → 交互 15s 倒计时 / 非交互必须 --yes
 #   (deploy-cluster.sh --yes 会导出 CUBESTACK_ASSUME_YES=1 透传到这) → 执行 reset → 继续部署。
-_pre_args=()
-[ "${CUBESTACK_ASSUME_YES:-0}" = "1" ] && _pre_args=(--yes)
-"${REPO_ROOT}/deployments/scripts/tools/k8s/reset-old-cluster.sh" "${_pre_args[@]}" \
-    || { err "覆盖安装前置检查未通过(详见上方输出: 有旧集群残留但未确认清除)"; exit 1; }
-unset _pre_args
+if [ "${CUBESTACK_UPGRADE:-0}" = "1" ]; then
+    say "升级模式(CUBESTACK_UPGRADE=1): 跳过覆盖安装旧集群 reset"
+else
+    _pre_args=()
+    [ "${CUBESTACK_ASSUME_YES:-0}" = "1" ] && _pre_args=(--yes)
+    "${REPO_ROOT}/deployments/scripts/tools/k8s/reset-old-cluster.sh" "${_pre_args[@]}" \
+        || { err "覆盖安装前置检查未通过(详见上方输出: 有旧集群残留但未确认清除)"; exit 1; }
+    unset _pre_args
+fi
 
 OFFLINE_SCRIPT="${REPO_ROOT}/deployments/kubespray/cubestack-offline.sh"
 [ -f "${OFFLINE_SCRIPT}" ] || { err "未找到 ${OFFLINE_SCRIPT}"; exit 1; }

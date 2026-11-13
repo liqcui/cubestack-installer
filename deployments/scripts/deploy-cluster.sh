@@ -134,6 +134,14 @@ $(_component_meta_list stub)
   --with-scale          仅执行 k8s_scale 扩容模块(不连带 operator/已部署组件): 登录首个 master 核对
                         实际集群节点 → 自动 diff 新节点(新节点先写入 cluster.conf)→ 仅对新节点
                         环境准备/装包/NTP/registry → 更新 inventory(new_node 组)→ cubestack-offline scale
+  --upgrade             原地升级已有集群(转 cubestack-offline.sh upgrade, 跳过常规模块流程);
+                        默认 dry-run, 加 --yes 才执行; 一次只升一个小版本
+  --to <ver>            升级目标 Kubernetes(必须等于目标 bundle profile 的 K8S_VERSION)
+  --serial <N|N%>       worker 分批大小(默认 1, 最保守)
+  --etcd-snapshot <path> 使用已有 etcd 快照(默认在首 master 自动创建)
+  --node-snapshot <id>  记录节点/VM 快照(与 --accept-node-rebuild 二选一)
+  --accept-node-rebuild 裸金属无 VM 快照时显式接受“回滚=etcd恢复+节点重建”
+  --check               仅升级预检(等同 --upgrade 的默认 dry-run)
   --steps k1,k2         单独安装指定组件(只跑该组件 + 其非基座依赖; 集群接入自动处理)
                         verify=只跑验证模块; verify_<组件>=只验证该组件
   --skip k1,k2          跳过模块(verify=跳过全部验证模块)
@@ -171,6 +179,8 @@ $(_component_meta_list stub)
   sudo ./deploy-cluster.sh --steps verify_ceph      # 只验证 Ceph(operator/CSI + ceph -s + RBD 块 I/O)
   sudo ./deploy-cluster.sh --with-scale             # 扩容: 仅 k8s_scale(先登录 master 核对集群→diff 新节点→只动新节点)
   sudo ./deploy-cluster.sh --with-scale --only worker02   # 扩容指定节点(--only 也先经集群核对)
+  sudo ./deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5   # 原地升级 dry-run(先看计划)
+  sudo ./deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5 --yes --node-snapshot <id>  # 执行
   sudo ./deploy-cluster.sh --only worker02 --with-scale
   sudo ./deploy-cluster.sh --steps verify           # 只跑全部验证模块(端到端验证, 不拉基座)
   sudo ./deploy-cluster.sh --steps verify_metallb   # 只验证某个组件(验后自动清理)
@@ -190,6 +200,9 @@ EOF
 FRESH=0; LIST=0; LIST_STEPS=0; LIST_VERBOSE=0; ASSUME_YES=0
 STEPS_ARG=""; SKIP_ARG=""; ENABLE_ARG=""; PHASE_ARG=""; ENABLE_PERSIST_ARG=""
 SCALE_ONLY=0
+# 原地升级模式(--upgrade): 直接转到 cubestack-offline.sh upgrade, 跳过常规模块流程
+UPGRADE_MODE=0; UPGRADE_TO=""; UPGRADE_CHECK=0; UPGRADE_SERIAL=""
+UPGRADE_ETCD_SNAPSHOT=""; UPGRADE_NODE_SNAPSHOT=""; UPGRADE_ACCEPT_NODE_REBUILD=0
 ONLY_HOSTS=""
 RELEASE_ARG=""
 VERIFY_OFFLINE_ARG=""
@@ -208,6 +221,14 @@ while [ $# -gt 0 ]; do
         --with-k8s) ENABLE_ARG="${ENABLE_ARG},k8s"; SKIP_ARG="${SKIP_ARG},gpu_operator,ceph,ceph_csi,keycloak,kueue,kubevirt,lustre_csi"; shift ;;
         # --with-scale: 仅扩容模块(k8s_scale), 不连带 operator/外层重复模块 —— 见下方 SCALE_ONLY 过滤
         --with-scale) ENABLE_ARG="${ENABLE_ARG},scale"; SCALE_ONLY=1; shift ;;
+        # --upgrade: 原地升级已有集群(转 cubestack-offline.sh upgrade); --to/--serial/... 原样透传
+        --upgrade) UPGRADE_MODE=1; shift ;;
+        --to) [ -n "${2:-}" ] || { err "--to 需要目标 Kubernetes 版本(如 v1.36.5)"; exit 1; }; UPGRADE_TO="$2"; shift 2 ;;
+        --serial) [ -n "${2:-}" ] || { err "--serial 需要值(如 1 / 20%)"; exit 1; }; UPGRADE_SERIAL="$2"; shift 2 ;;
+        --etcd-snapshot) [ -n "${2:-}" ] || { err "--etcd-snapshot 需要路径"; exit 1; }; UPGRADE_ETCD_SNAPSHOT="$2"; shift 2 ;;
+        --node-snapshot) [ -n "${2:-}" ] || { err "--node-snapshot 需要 id/路径"; exit 1; }; UPGRADE_NODE_SNAPSHOT="$2"; shift 2 ;;
+        --accept-node-rebuild) UPGRADE_ACCEPT_NODE_REBUILD=1; shift ;;
+        --check) UPGRADE_CHECK=1; shift ;;
         # --with-cubestack = 基座 + cluster.conf 中 XXX_ENABLED=true 的 operator(以 cluster.conf 为主, 不强制启用)
         --with-cubestack) ENABLE_ARG="${ENABLE_ARG},k8s"; shift ;;
         --steps)    STEPS_ARG="${2:?--steps 需要模块列表, 逗号分隔}"; shift 2 ;;
@@ -313,6 +334,38 @@ fi
 # 旋钮)不一致时告警 —— 只在本统一入口打一次, 模块进程不再各自刷屏。
 if [ "${LIST_STEPS}" != "1" ] && [ "${LIST}" != "1" ]; then
     warn_ssh_user_mismatch
+fi
+
+# --upgrade: 原地升级已有集群 —— 直接转到 cubestack-offline.sh upgrade,
+#   跳过 k8s_deploy / reset 等常规模块流程(升级绝不 reset)。
+if [ "${UPGRADE_MODE}" = "1" ]; then
+    say "升级模式: 原地升级集群 ${CLUSTER_NAME}(跳过常规模块流程)"
+    # release 模式会用 release.env 覆盖版本面; 与显式 --profile 冲突时明确报错,
+    # 避免"请求 v2.32.1 实际却按 release 的 v2.32.0 升级"的静默错配。
+    if [ -n "${PROFILE_ARG:-}" ] && [ "${PROFILE_ARG}" != "none" ] && [ "${KUBESPRAY_VERSION}" != "${PROFILE_ARG}" ]; then
+        err "升级目标档案被 release 模式覆盖: 请求 ${PROFILE_ARG}, 实际 ${KUBESPRAY_VERSION}; 请换用非 release 的 OFFLINE_FILES_ROOT, 或准备包含该版本的新 release"
+        exit 1
+    fi
+    _upgrade_args=()
+    [ -n "${UPGRADE_TO}" ] && _upgrade_args+=(--to "${UPGRADE_TO}")
+    [ "${UPGRADE_CHECK}" = "1" ] && _upgrade_args+=(--check)
+    [ "${ASSUME_YES}" = "1" ] && _upgrade_args+=(--yes)
+    [ -n "${UPGRADE_SERIAL}" ] && _upgrade_args+=(--serial "${UPGRADE_SERIAL}")
+    [ -n "${UPGRADE_ETCD_SNAPSHOT}" ] && _upgrade_args+=(--etcd-snapshot "${UPGRADE_ETCD_SNAPSHOT}")
+    [ -n "${UPGRADE_NODE_SNAPSHOT}" ] && _upgrade_args+=(--node-snapshot "${UPGRADE_NODE_SNAPSHOT}")
+    [ "${UPGRADE_ACCEPT_NODE_REBUILD}" = "1" ] && _upgrade_args+=(--accept-node-rebuild)
+    exec env \
+        CUBESTACK_BASE_DIR="${KUBESPRAY_BASE_DIR:-${REPO_ROOT}/deployments/kubespray}" \
+        CUBESTACK_INVENTORY_DIR="${KUBESPRAY_INV_DIR:-${REPO_ROOT}/deployments/kubespray/inventory/${CLUSTER_NAME}}" \
+        CUBESTACK_KUBESPRAY_DIR="${KUBESPRAY_BASE_DIR:-${REPO_ROOT}/deployments/kubespray}/kubespray" \
+        CUBESTACK_LOCAL_REPO_DIR="${LOCAL_REPO_DIR}" \
+        OFFLINE_FILES_ROOT="${OFFLINE_FILES_ROOT}" \
+        OFFLINE_FILES_DIR="${OFFLINE_FILES_DIR}" \
+        KUBESPRAY_VERSION="${KUBESPRAY_VERSION}" \
+        KUBESPRAY_PROFILE="${KUBESPRAY_PROFILE:-}" \
+        CUBESTACK_REMOTE_USER="${SSH_USER:-}" \
+        CUBESTACK_ASSUME_YES="${CUBESTACK_ASSUME_YES:-0}" \
+        bash "${REPO_ROOT}/deployments/kubespray/cubestack-offline.sh" upgrade "${CLUSTER_NAME}" "${_upgrade_args[@]}"
 fi
 
 # --enable k1,k2 = 只把模块开关写入 cluster.conf(持久化), 不立即部署。
