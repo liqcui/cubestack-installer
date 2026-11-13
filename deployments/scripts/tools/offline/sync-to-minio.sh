@@ -182,7 +182,9 @@ if [ "${DRY_RUN}" = "1" ]; then
     MC_ARGS+=(--dry-run)
 else
     MC_ARGS+=(--overwrite)
-    [ "${PRUNE}" = "1" ] && MC_ARGS+=(--remove)   # --remove = 删除远端多余文件
+    if [ "${PRUNE}" = "1" ]; then
+        MC_ARGS+=(--remove)   # --remove = 删除远端多余文件
+    fi
 fi
 # 本地临时版本不上传(设计 D4): mc --exclude(含目录内全部内容)
 if [ "${#LOCAL_ONLY_RELS[@]}" -gt 0 ]; then
@@ -206,5 +208,7 @@ if [ "${DRY_RUN}" = "1" ]; then
 else
     ok "同步完成: ${LOCAL_SRC} → ${REMOTE_DST}"
     echo "  其他部署机拉取: ./fetch-offline-from-minio.sh(默认排除 virtual-machine; --sub/--all 按需)"
-    [ "${PRUNE}" = "1" ] && echo "  已启用 --remove: 远端多余文件已删除(MinIO 与本地一致)"
+    if [ "${PRUNE}" = "1" ]; then
+        echo "  已启用 --remove: 远端多余文件已删除(MinIO 与本地一致)"
+    fi
 fi
