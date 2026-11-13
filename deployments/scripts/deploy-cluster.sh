@@ -141,6 +141,7 @@ $(_component_meta_list stub)
   --etcd-snapshot <path> 使用已有 etcd 快照(默认在首 master 自动创建)
   --node-snapshot <id>  记录节点/VM 快照(与 --accept-node-rebuild 二选一)
   --accept-node-rebuild 裸金属无 VM 快照时显式接受“回滚=etcd恢复+节点重建”
+  --drain-fallback      drain 失败时用 --disable-eviction 兜底(绕过 PDB)
   --check               仅升级预检(等同 --upgrade 的默认 dry-run)
   --steps k1,k2         单独安装指定组件(只跑该组件 + 其非基座依赖; 集群接入自动处理)
                         verify=只跑验证模块; verify_<组件>=只验证该组件
@@ -203,6 +204,7 @@ SCALE_ONLY=0
 # 原地升级模式(--upgrade): 直接转到 cubestack-offline.sh upgrade, 跳过常规模块流程
 UPGRADE_MODE=0; UPGRADE_TO=""; UPGRADE_CHECK=0; UPGRADE_SERIAL=""
 UPGRADE_ETCD_SNAPSHOT=""; UPGRADE_NODE_SNAPSHOT=""; UPGRADE_ACCEPT_NODE_REBUILD=0
+UPGRADE_DRAIN_FALLBACK=0
 ONLY_HOSTS=""
 RELEASE_ARG=""
 VERIFY_OFFLINE_ARG=""
@@ -228,6 +230,7 @@ while [ $# -gt 0 ]; do
         --etcd-snapshot) [ -n "${2:-}" ] || { err "--etcd-snapshot 需要路径"; exit 1; }; UPGRADE_ETCD_SNAPSHOT="$2"; shift 2 ;;
         --node-snapshot) [ -n "${2:-}" ] || { err "--node-snapshot 需要 id/路径"; exit 1; }; UPGRADE_NODE_SNAPSHOT="$2"; shift 2 ;;
         --accept-node-rebuild) UPGRADE_ACCEPT_NODE_REBUILD=1; shift ;;
+        --drain-fallback) UPGRADE_DRAIN_FALLBACK=1; shift ;;
         --check) UPGRADE_CHECK=1; shift ;;
         # --with-cubestack = 基座 + cluster.conf 中 XXX_ENABLED=true 的 operator(以 cluster.conf 为主, 不强制启用)
         --with-cubestack) ENABLE_ARG="${ENABLE_ARG},k8s"; shift ;;
@@ -354,6 +357,7 @@ if [ "${UPGRADE_MODE}" = "1" ]; then
     [ -n "${UPGRADE_ETCD_SNAPSHOT}" ] && _upgrade_args+=(--etcd-snapshot "${UPGRADE_ETCD_SNAPSHOT}")
     [ -n "${UPGRADE_NODE_SNAPSHOT}" ] && _upgrade_args+=(--node-snapshot "${UPGRADE_NODE_SNAPSHOT}")
     [ "${UPGRADE_ACCEPT_NODE_REBUILD}" = "1" ] && _upgrade_args+=(--accept-node-rebuild)
+    [ "${UPGRADE_DRAIN_FALLBACK}" = "1" ] && _upgrade_args+=(--drain-fallback)
     exec env \
         CUBESTACK_BASE_DIR="${KUBESPRAY_BASE_DIR:-${REPO_ROOT}/deployments/kubespray}" \
         CUBESTACK_INVENTORY_DIR="${KUBESPRAY_INV_DIR:-${REPO_ROOT}/deployments/kubespray/inventory/${CLUSTER_NAME}}" \

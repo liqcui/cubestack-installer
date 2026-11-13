@@ -190,6 +190,7 @@ usage() {
     echo "  --etcd-snapshot <path> 使用已有 etcd 快照（默认在首 master 自动创建）"
     echo "  --node-snapshot <id>   记录节点/VM 快照（与 --accept-node-rebuild 二选一）"
     echo "  --accept-node-rebuild  裸金属无 VM 快照时显式接受“回滚=etcd恢复+节点重建”"
+    echo "  --drain-fallback       drain 失败时用 --disable-eviction 兜底(绕过 PDB)"
     echo "  --check                只做预检（等同默认 dry-run）"
     echo ""
     echo "选项:"
@@ -2696,6 +2697,7 @@ UPGRADE_ETCD_SNAPSHOT=""
 UPGRADE_NODE_SNAPSHOT=""
 UPGRADE_ACCEPT_NODE_REBUILD=0
 UPGRADE_ETCD_BRIDGE=""
+UPGRADE_DRAIN_FALLBACK=0
 UPGRADE_YES=0
 UPGRADE_CHECK=0
 
@@ -2740,6 +2742,10 @@ while [ $# -gt 0 ]; do
             [ -z "${2:-}" ] && err "--etcd-bridge 需要版本(如 3.5.33)"
             UPGRADE_ETCD_BRIDGE="$2"
             shift 2
+            ;;
+        --drain-fallback)
+            UPGRADE_DRAIN_FALLBACK=1
+            shift
             ;;
         --check)
             UPGRADE_CHECK=1
@@ -3071,6 +3077,16 @@ cmd_upgrade() {
     fix_download_sync_dirs
     fix_download_groups
     _upgrade_ansible_extra_vars "${prof}"
+    if [ "${UPGRADE_DRAIN_FALLBACK}" = "1" ]; then
+        UPGRADE_EXTRA_VARS+=(
+            -e "drain_retries=1"
+            -e "drain_retry_delay_seconds=5"
+            -e "drain_fallback_enabled=true"
+            -e "drain_fallback_retries=3"
+            -e "drain_fallback_timeout=360s"
+        )
+        log "drain 兜底已启用: 正常 drain 失败后使用 --disable-eviction(绕过 PDB)"
+    fi
 
     local upgrade_log="${LOG_FILE:-/tmp/${CLUSTER_NAME}-upgrade.log}"
     log "执行 Kubespray 原地升级: upgrade-cluster.yml (kube_version=${target})"
