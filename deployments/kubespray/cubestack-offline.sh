@@ -2930,17 +2930,17 @@ _upgrade_take_etcd_snapshot() {
     local snap="${UPGRADE_ETCD_SNAPSHOT}"
     if [ -n "${snap}" ]; then
         if _ssh_master "sudo test -s '${snap}'" 2>/dev/null; then
-            log "使用指定的 etcd 快照(master): ${snap}"
+            log "使用指定的 etcd 快照(master): ${snap}" >&2
             printf '%s' "${snap}"; return 0
         fi
         if [ -s "${snap}" ]; then
-            log "使用指定的本地 etcd 快照: ${snap}(注意: 恢复时需在 master 可用)"
+            log "使用指定的本地 etcd 快照: ${snap}(注意: 恢复时需在 master 可用)" >&2
             printf '%s' "${snap}"; return 0
         fi
         err "指定的 etcd 快照不存在或为空: ${snap}"
     fi
     snap="/var/backups/etcd-${CLUSTER_NAME}-$(date +%Y%m%d%H%M%S).db"
-    log "在首个 master 创建 etcd 快照: ${snap}"
+    log "在首个 master 创建 etcd 快照: ${snap}" >&2
     local tls; tls="$(_etcd_tls_args)" || err "读不到 etcd 证书路径(/etc/etcd.env 或 kubeadm 路径)"
     _ssh_master "sudo mkdir -p /var/backups && sudo env ETCDCTL_API=3 /usr/local/bin/etcdctl --endpoints=https://127.0.0.1:2379 ${tls} snapshot save '${snap}' >/dev/null && sudo test -s '${snap}'" \
         || err "etcd 快照失败(证书路径/磁盘?); 用 --etcd-snapshot 指定已有快照, 或先手工 etcdctl snapshot save"
