@@ -7,6 +7,9 @@
 - **入口脚本**: `deployments/kubespray/cubestack-kubespray-upgrade.sh <tag> [--root DIR] [--tree-src DIR] [--no-fetch]`(取树 / 备份 / 换树 / 退休判定 / 重放, 8 步)
 - **补丁层**: `deployments/kubespray/cubestack-patches/*.patch` + 重放器 `deployments/kubespray/cubestack-patch-apply.sh`(`--apply` / `--check` / `--check-retired` / `--list`,退出码 0/1/2)
 - **版本专属文档**: `docs/kubespray-v<tag>/`(设计 / 计划 / 人工下载清单)—— 本文件只放**与版本无关**的流程与记录
+- **文档口径**: 本文 §1.0 是两类升级、K8s 选版与版本目录刷新的**唯一正本**。`docs/cluster-upgrade-path.md`
+  (2026-09-28 历史设计,文中"未实现"指当时)与 `docs/kubespray-versioning/README.md` 中与本文冲突的旧说法
+  (如"原地升级未实现"、"`--k8s-version` 必须显式给")一律以本文 §1.0 为准。
 - **首条记录**: v2.28.0 → v2.32.0(2026-09-28,见 §2)
 
 ---
@@ -15,80 +18,112 @@
 
 ### 1.0 两类升级与 Kubernetes 跟随(2026-11-13 起)
 
-`cubestack-kubespray-upgrade.sh` 会自动判定两类升级，两者默认都把 Kubernetes 钉到**目标树
-`kubelet_checksums` 表首**（该 kubespray 支持的最高版本）：
+`cubestack-kubespray-upgrade.sh` 按新 tag 的 `major.minor` 与当前树是否相同**自动判定**；两类都走
+同一套换树引擎，默认都把 Kubernetes 钉到**目标树 `kubelet_checksums` 表首**（该 kubespray 支持的最高版本）：
 
 | 类型 | 判定 | 树 | 默认 K8S |
 |---|---|---|---|
-| 同线刷新 | 目标 tag 的 `major.minor` 与当前树相同（如 `v2.32.0→v2.32.1`） | 沿用换树引擎 | 新树表首（如 `1.36.5`） |
-| 跨线升级 | `major.minor` 变化（如 `v2.32.x→v2.33.0`） | 整树替换 | 新树表首 |
+| 同线刷新 | `major.minor` 相同（如 `v2.32.0 → v2.32.1`） | 整树替换 + 重放补丁 | 新树表首（如 `1.36.5`） |
+| 跨线升级 | `major.minor` 变化（如 `v2.32.x → v2.33.0`） | 整树替换 + 重放补丁 | 新树表首 |
 
-常用命令：
+> ⚠ 同线刷新**不等于**只换 patch：默认跟随表首时 k8s 可能跨 minor（如 1.35.8 → 1.36.5），
+> 对运行中的集群仍是一次 minor 升级；想留在当前线用 `--keep-k8s-line`。
+> 本脚本只准备**版本面 + 版本目录**，不滚动集群；真正升级见 §1.0.3。
+
+> 设计边界（不做的事）：不引入 bundle 生命周期 / 多版本并发 / 补丁快照 / staging-promote；
+> 两类升级复用现有换树、补丁重放、版本目录与 `_derive_profile`，不新增编排器。
+
+#### 1.0.1 入口与目标 K8s 选择
 
 ```bash
-# 默认：跟随新树最高 Kubernetes；生成 profile + 版本目录骨架（不动集群）
+# 默认：跟随新树最高 Kubernetes；换树 + 重放补丁 + 生成 profile/版本目录（不动物理集群）
 bash deployments/kubespray/cubestack-kubespray-upgrade.sh v2.32.1 --tree-src /tmp/kubespray-2.32.1
 
 # 只打印计划（模式 / 目标 k8s / 将写哪些文件），不换树
-bash deployments/kubespray/cubestack-kubespray-upgrade.sh v2.32.1 \
-  --tree-src /tmp/kubespray-2.32.1 --check
+... --check
 
-# 保留当前 k8s 线（1.35），取该线最高 patch
-bash deployments/kubespray/cubestack-kubespray-upgrade.sh v2.32.1 \
-  --tree-src /tmp/kubespray-2.32.1 --keep-k8s-line
+# 保留当前 k8s 线（如 1.35），取该线最高 patch
+... --keep-k8s-line
 
-# 显式指定线 / 版本
+# 显式指定线 / 版本（必须在目标树表内）
 ... --line 1.35
 ... --k8s-version v1.36.5
+
+# 强制模式（与自动判定不符时直接 rc=2，防止拿错树）
+... --refresh          # 强制按同线刷新
+... --line-upgrade     # 强制按跨线升级
 
 # 成功后同步更新 cluster.defaults.conf 与 inventory 钉子
 ... --set-default
 ```
 
-> ⚠ 环境变量 `K8S_VERSION` **不再作为目标版本**（旧 SOP 用它过版本门）；仅在 `--keep-k8s-line`
-> 时用于识别当前线。要指定目标请用 `--k8s-version` / `--line`。
->
-> ⚠ 同线刷新把 k8s 从 1.35 换到 1.36，对运行中的集群仍是一次 Kubernetes minor 升级；
-> 本脚本只准备版本面/版本目录，真正滚动集群需下面的 `upgrade`。
+- 目标 k8s 优先级（脚本实现）：`--k8s-version` > `--line X.Y` > `--keep-k8s-line` > 新树表首。
+- ⚠ 环境变量 `K8S_VERSION` **不再作为目标版本**，只在 `--keep-k8s-line` 时用于识别当前线。
+- ⚠ `--k8s-version` 不在目标树 `kubelet_checksums` 表内 → rc=2 并打印候选。
+- ⚠ 不加 `--set-default` 时只写 `config/profiles/<tag>.profile` 与版本目录；正式钉子
+  （`cluster.defaults.conf` / inventory）仍需 `--set-default` 或人工落盘。
 
-### 1.0.1 原地升级已有集群(阶段 3)
+#### 1.0.2 版本目录与离线件刷新
 
-```bash
-# dry-run: 打印当前/目标、阶梯、etcd、健康检查、备份要求
-sudo ./deployments/scripts/deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5
-
-# 执行: 需要 etcd 快照(默认自动创建) + 节点/VM 快照
-sudo ./deployments/scripts/deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5 --yes \
-  --node-snapshot <vm-snapshot-id>
-
-# 裸金属无 VM 快照: 显式接受“回滚=etcd恢复+节点重建”
-... --yes --accept-node-rebuild
-```
-
-边界：一次只升一个小版本；不支持降级；etcd 3.5(<3.5.26)→3.6 桥接未实现；默认 `serial=1`；
-升级后自动检查 `/healthz`、节点 Ready、kube-system Pod、etcd endpoint health。详见
-[`docs/cluster-upgrade-path.md`](cluster-upgrade-path.md)。
-
-> ⚠ 如果 `OFFLINE_FILES_ROOT` 下有 `release.env`，release 模式会覆盖 `--profile`；
-> `deploy-cluster.sh --upgrade` 会明确报错。升级请用非 release 的离线根，或准备包含目标版本的
-> 新 release。
-
-**版本目录刷新（阶段 2）**：如果旧版本目录存在，[8/8] 会以它为基线 `refresh`——复制未变的
-镜像/二进制/包，排除旧 `tree.tar.gz`/`VERSION.profile`/`README.md`，再打新树、推导新档案；
-随后 `check-assets` 列出缺件与新版本不需要的旧件（旧件保留，便于回滚）。补齐顺序：
+入口 **[8/8]** 自动完成：推导 `config/profiles/<tag>.profile`，并造 `offline-files/kubespray/<tag>/`
+版本目录。若旧版本目录存在，会以它为基线 `refresh`——复制未变的镜像/二进制/包，排除旧
+`tree.tar.gz` / `VERSION.profile` / `README.md`，再打新树、推导新档案；随后 `check-assets`
+列出缺件与新版本不再需要的旧件（旧件保留，便于回滚）。手工补齐顺序：
 
 ```bash
-# 0) 新镜像先进 Harbor(上游→Harbor; 需联网)
+# 0) 新镜像先进 Harbor（上游 → Harbor；需联网）
 sudo KUBESPRAY_VERSION=v2.32.1 bash deployments/scripts/tools/images/harbor-sync-images.sh --group k8s-base,ceph
-# 1) 新镜像(从 Harbor 落到新版本目录)
+# 1) 新镜像（Harbor → 新版本目录）
 sudo KUBESPRAY_VERSION=v2.32.1 bash deployments/scripts/tools/images/harbor-save-images.sh --group k8s-base,ceph
-# 2) 新二进制/CRD: 从 MinIO 暂存区或上游补齐(见 check-assets 输出)
+# 2) 新二进制/CRD：从 MinIO 暂存区或上游补齐（见 check-assets 输出）
 # 3) 全量校验
 bash deployments/scripts/tools/offline/verify-offline-files.sh \
   --root /data/offline-files/kubespray/v2.32.1 --level full --no-stamp
 # 4) 只发布该版本到 MinIO
 bash deployments/scripts/tools/offline/sync-to-minio.sh --version v2.32.1
 ```
+
+版本目录子命令（机制细节见 [`kubespray-versioning/README.md`](kubespray-versioning/README.md)）：
+
+```bash
+bash deployments/kubespray/cubestack-version-dir.sh profile v2.33.0 \
+  --from-root <部署根> --out /tmp/v2.33.0.profile
+bash deployments/kubespray/cubestack-version-dir.sh refresh v2.33.0 \
+  --from-root <部署根> --assets-from <旧版本目录>
+bash deployments/kubespray/cubestack-version-dir.sh check-assets v2.33.0
+```
+
+#### 1.0.3 原地升级已有集群(阶段 3)
+
+```bash
+# dry-run: 打印当前/目标版本、阶梯、etcd、健康检查、备份要求
+sudo ./deployments/scripts/deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5
+
+# 执行: 需要 etcd 快照(默认在首 master 自动创建) + 节点/VM 快照
+sudo ./deployments/scripts/deploy-cluster.sh --profile v2.32.1 --upgrade --to v1.36.5 --yes \
+  --node-snapshot <vm-snapshot-id> [--serial 1] [--etcd-snapshot /var/backups/...db]
+
+# 裸金属无 VM 快照: 显式接受“回滚 = etcd 恢复 + 节点重建”
+... --yes --accept-node-rebuild
+
+# 直接调底层入口
+sudo ./deployments/kubespray/cubestack-offline.sh upgrade cubestack-cluster \
+  --to v1.36.5 --check
+```
+
+边界（与上游一致）：
+
+- **一次只升一个小版本**：1.35.x → 1.36.x 可以；1.34.x → 1.36.x 拒绝，需中间 bundle 分步执行；
+- **不支持降级**；回滚依赖 etcd 快照 + 节点/VM 快照（或节点重建）；
+- **etcd 3.5(<3.5.26) → 3.6 桥接未实现**，遇到直接拒绝，需先手工升到 ≥3.5.26；
+- 升级随目标 profile 一起移动 etcd/containerd/CNI/K8s 组件版本；
+- 默认 `serial=1`（最保守），可用 `--serial N|N%` 调整；
+- 升级后自动检查 `/healthz`、节点 Ready、kube-system Pod、etcd endpoint health；
+- 状态文件 `inventory/<cluster>/.upgrade.state` 记录 `from/to/快照/phase`，成功后可删除。
+
+> ⚠ **release 模式**：`OFFLINE_FILES_ROOT` 下有 `release.env` 时，`load_config` 会自动进入
+> release 模式并用 release 的版本档案覆盖 `--profile`；`deploy-cluster.sh --upgrade` 会明确报错。
+> 升级请用**非 release** 的 `OFFLINE_FILES_ROOT`，或准备包含目标版本的新 release。
 
 ### 1.1 入口:一条命令
 
@@ -100,10 +135,7 @@ bash deployments/kubespray/cubestack-kubespray-upgrade.sh v2.32.0 --tree-src /tm
 
 - `<tag>` = 目标 kubespray tag(**唯一位置参数**);`--tree-src` = 本机已备好的**纯净树**(离线/演练路径,首选);
   不带 `--tree-src` 且不带 `--no-fetch` 时会联网 `git clone --depth 1 --branch <tag>`(部署机通常不可达 → 用 `--tree-src`)。
-- **目标 k8s 选择**：默认取新树 `kubelet_checksums` 表首；`--line X.Y` 取该线最高 patch；
-  `--keep-k8s-line` 保留当前线；`--k8s-version V` 显式指定（必须在表内）。
-  ⚠ 环境变量 `K8S_VERSION` 不再作为目标（只在 `--keep-k8s-line` 时识别当前线）。
-  ⚠ 正式钉子用 `--set-default` 落进 `cluster.defaults.conf` + inventory；不加时只打印版本面变化。
+- **目标 k8s 选择**（`--k8s-version` / `--line` / `--keep-k8s-line` / 默认表首）见 §1.0.1。
 - 退出码:**0** = 换树 + 退休判定 + 重放全绿;**1** = 重放有 CONFLICT(停下点名文件);**2** = 参数/环境/前置错误(含版本门、脏工作区、取树失败)。
 - ⚠ `--root` 默认 = 脚本所在目录(即**仓库内真树**),一次忘了 `--root` 的调用就是真换树;演练请把根放在仓库**外**(如 `/tmp/up-rehearsal`),此时 tag 备份会安全跳过。
 
@@ -124,7 +156,7 @@ bash deployments/kubespray/cubestack-kubespray-upgrade.sh v2.32.0 --tree-src /tm
 
 ### 1.3 七条铁律(每条都踩过或差点踩)
 
-1. **目标 k8s 由 `--k8s-version` / `--line` / `--keep-k8s-line` 选择；默认取新树表首。** 环境变量 `K8S_VERSION` 不再作为目标（只在 `--keep-k8s-line` 时识别当前线）。`--k8s-version` 必须在目标树 `kubelet_checksums` 表内；不在表内直接 rc=2 并给候选。正式钉子由 `--set-default` 写入 `cluster.defaults.conf` + inventory；不加时脚本只打印版本面变化，需要人工落盘。
+1. **目标 k8s 的选择规则与落盘见 §1.0.1。** 两条红线：`--k8s-version` 必须在目标树 `kubelet_checksums` 表内（否则 rc=2）；不加 `--set-default` 时只写 profile/版本目录，不会改 `cluster.defaults.conf` / inventory。
 2. **`--check-retired` 必须在 `--apply` 之前**(顺序是硬要求,重放器头部有同一句)。退休判定的判据是"这棵树已经等于我们打过之后的样子",只有**刚换完的纯净树**上跑才有意义;反过来(打完再跑)恒报 RETIRE,分不清"上游吸收了"与"我们刚打的"。
 3. **换树后要重跑入口脚本?先 `git add` + `git commit` 把换树结果落盘**。换树会改写成千上万个**已跟踪**文件,入口 [1/8] 的全仓库工作区门会把你挡下;落盘范围 = **整个部署根**(仓库内 = `deployments/kubespray`),**不只是树** —— 冲突处置改的 `cubestack-patches/*.patch` 在树外,漏了就白改。
 4. **树 diff 必须加 `--no-dereference`,并过滤 `patch-playbooks`**。树内 `contrib/terraform/*/group_vars`、`extra_playbooks/inventory` 等是指向 `inventory/` 的**相对符号链接**,默认 diff 会跟着展开、报出几十行假差异;`patch-playbooks/` 是我们自持目录(上游不带),会显成 `Only in <树>:` 行,容易被下次升级的人误判。完整命令见 §1.4。

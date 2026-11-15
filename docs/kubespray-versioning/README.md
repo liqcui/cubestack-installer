@@ -85,24 +85,10 @@ bash deployments/kubespray/cubestack-version-dir.sh materialize v2.28.0
 # ① 备好该版本的部署根(含 kubespray/ 与 cubestack-patch-apply.sh; 通常 = 仓库 deployments/kubespray)
 #    新版本要先按 docs/kubespray-upgrade.md 的 SOP 换树 + 重放该版本补丁
 # ② 造版本目录(预验证补丁在位 → 打包树 → 从树内表机械推导档案骨架)
-#    默认取该树 kubelet_checksums 表首(最高 Kubernetes); 要降线用 --k8s-version
 bash deployments/kubespray/cubestack-version-dir.sh new v2.33.0 \
-     --from-root /path/to/deployments/kubespray                     # 本地临时版本加 --local
-# 只推导档案(不建目录/不打包), 供升级脚本写 config/profiles/:
-bash deployments/kubespray/cubestack-version-dir.sh profile v2.33.0 \
-     --from-root /path/to/deployments/kubespray --out /tmp/v2.33.0.profile
-
-# 阶段 2: 以旧版本目录为基线刷新(复制未变资产, 只补变化项; 等价于 new + 安全复制)
-bash deployments/kubespray/cubestack-version-dir.sh refresh v2.33.0 \
-     --from-root /path/to/deployments/kubespray \
-     --assets-from /data/offline-files/kubespray/v2.32.1
-# 校验二进制/CRD + 镜像是否齐全(缺件会列出; 返回 1)
-bash deployments/kubespray/cubestack-version-dir.sh check-assets v2.33.0
-# 只同步该版本目录到 MinIO(不影响其他版本)
-bash deployments/scripts/tools/offline/sync-to-minio.sh --version v2.33.0
+     --from-root /path/to/deployments/kubespray --k8s-version v1.36.4     # 本地临时版本加 --local
 # ③ 备料(镜像走 Harbor 统一源; 二进制/包按该版本树表值取)
-#    KUBESPRAY_VERSION 会让镜像工具自动加载 config/profiles/<版本>.profile
-sudo KUBESPRAY_VERSION=v2.33.0 bash deployments/scripts/tools/images/harbor-save-images.sh --group k8s-base   # 落点已按版本目录
+sudo bash deployments/scripts/tools/images/harbor-save-images.sh --group k8s-base   # 落点已按版本目录
 # ④ 校验
 bash deployments/kubespray/cubestack-version-dir.sh verify v2.33.0
 bash deployments/scripts/tools/check-modules.sh          # ⑱ 逐版本断言
@@ -113,8 +99,8 @@ sudo bash deployments/scripts/tools/offline/sync-to-minio.sh
 ```
 
 > ⚠ `new` 的两条硬闸门:① 该树 `cubestack-patch-apply.sh --check` 必须通过(只打包**已验证**的树);
-> ② k8s 线**默认取树内 `kubelet_checksums` 表首**(该 kubespray 支持的最高 Kubernetes);
-> `--k8s-version` 可显式降线且必须在表内。其余 10 项版本值从树表**机械推导**, 禁手抄。
+> ② `--k8s-version` 必须显式给且**在树内 `kubelet_checksums` 表里**(小版本线是人工选择, 树表只是
+> "可安装全集")。其余 10 项版本值从树表**机械推导**, 禁手抄。
 
 ### 打包格式约定(踩过)
 
