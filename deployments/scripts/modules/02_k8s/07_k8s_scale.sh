@@ -379,8 +379,17 @@ fi
 if [ "${_CEPH_PRELOAD}" = "true" ]; then
     say "ceph 镜像预载: 源 ${CEPH_IMAGE_DIR:-${OFFLINE_FILES_DIR}/images}(新节点 containerd 就位后自动同步 + ctr import)"
 fi
+# ⚠ 版本树选择(与 06_k8s_deploy 同口径): 选中物化版本时用 KUBESPRAY_BASE_DIR/kubespray,
+#   不能用 cluster.defaults.conf 固定指向仓库树的 KUBESPRAY_DIR。
+_KS_TREE_VER="$(awk '/^version:/{print "v"$2; exit}' "${REPO_ROOT}/deployments/kubespray/kubespray/galaxy.yml" 2>/dev/null || true)"
+if [ -n "${KUBESPRAY_BASE_DIR:-}" ] && [ -n "${_KS_TREE_VER}" ] && [ "${KUBESPRAY_VERSION}" != "${_KS_TREE_VER}" ]; then
+    _KS_DIR="${KUBESPRAY_BASE_DIR}/kubespray"
+else
+    _KS_DIR="${KUBESPRAY_DIR}"
+fi
+unset _KS_TREE_VER
 OFFLINE_ENV=(
-    "CUBESTACK_KUBESPRAY_DIR=${KUBESPRAY_DIR}"
+    "CUBESTACK_KUBESPRAY_DIR=${_KS_DIR}"
     "CUBESTACK_INVENTORY_DIR=${KUBESPRAY_INV_DIR}"
     "CUBESTACK_BASE_DIR=${KUBESPRAY_BASE_DIR:-${REPO_ROOT}/deployments/kubespray}"
     "OFFLINE_FILES_DIR=${OFFLINE_FILES_DIR}"

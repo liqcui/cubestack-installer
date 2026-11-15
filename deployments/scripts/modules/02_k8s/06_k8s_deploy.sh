@@ -257,8 +257,18 @@ say "执行 kubespray 离线部署 (via cubestack-offline.sh) ..."
 _CEPH_SYSTEM_ON=false
 [ "${CEPH_ENABLED:-false}" = "true" ] && _CEPH_SYSTEM_ON=true
 [ "${CEPH_CSI_ENABLED:-false}" = "true" ] && _CEPH_SYSTEM_ON=true
+# ⚠ 版本树选择: cluster.defaults.conf 的 KUBESPRAY_DIR 固定指向仓库树(v2.32.0)。
+#   选中物化版本(v2.32.1 等)时必须用 KUBESPRAY_BASE_DIR/kubespray —— 否则会把 v1.36.5
+#   传给 v2.32.0 的 checksums 表, validate_inventory 直接断言失败(2026-11-14 实机)。
+_KS_TREE_VER="$(awk '/^version:/{print "v"$2; exit}' "${REPO_ROOT}/deployments/kubespray/kubespray/galaxy.yml" 2>/dev/null || true)"
+if [ -n "${KUBESPRAY_BASE_DIR:-}" ] && [ -n "${_KS_TREE_VER}" ] && [ "${KUBESPRAY_VERSION}" != "${_KS_TREE_VER}" ]; then
+    _KS_DIR="${KUBESPRAY_BASE_DIR}/kubespray"
+else
+    _KS_DIR="${KUBESPRAY_DIR}"
+fi
+unset _KS_TREE_VER
 OFFLINE_ENV=(
-    "CUBESTACK_KUBESPRAY_DIR=${KUBESPRAY_DIR}"
+    "CUBESTACK_KUBESPRAY_DIR=${_KS_DIR}"
     "CUBESTACK_INVENTORY_DIR=${KUBESPRAY_INV_DIR}"
     "CUBESTACK_BASE_DIR=${KUBESPRAY_BASE_DIR:-${REPO_ROOT}/deployments/kubespray}"
     "OFFLINE_FILES_DIR=${OFFLINE_FILES_DIR}"
