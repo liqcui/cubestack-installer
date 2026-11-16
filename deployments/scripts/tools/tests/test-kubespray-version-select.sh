@@ -40,28 +40,37 @@ _val() { printf '%s\n' "$1" | awk -F= -v k="$2" '$1==k {sub(/^[^=]*=/,""); print
 
 NODES_CONF='NODES=("master,m1,10.0.0.1,ubuntu,p")'
 TREE_VER="$(awk '/^version:/{print "v"$2; exit}' "${REPO_ROOT}/deployments/kubespray/kubespray/galaxy.yml")"
-# 默认版本 = max(仓库树版本, 所有入库 profile 的 KUBESPRAY_VERSION) —— 与 lib-common 同口径
+# 默认版本: cluster.defaults.conf 的钉值优先; 未钉时 = max(仓库树版本, 所有入库 profile)
+# —— 与 lib-common 同口径
 LATEST_VER="$( { printf '%s\n' "${TREE_VER}"
     for _pf in "${REPO_ROOT}"/deployments/config/profiles/*.profile; do
         [ -f "${_pf}" ] || continue
         sed -nE 's/^[[:space:]]*KUBESPRAY_VERSION=([^[:space:]#]+).*/\1/p' "${_pf}" | head -1
     done; } | sed '/^$/d' | sort -V | tail -1 )"
+PIN_VER="$(sed -nE 's/^KUBESPRAY_VERSION="\$\{KUBESPRAY_VERSION:-([^}]*)\}".*/\1/p' \
+    "${REPO_ROOT}/deployments/config/cluster.defaults.conf" | head -1)"
+EXPECT_VER="${PIN_VER:-${LATEST_VER}}"
 
-echo "== ① 默认版本 = 最新(仓库树或入库档案) =="
+echo "== ① 默认版本 = cluster.defaults.conf 钉值(未钉 = 最新) =="
 out="$(_probe "${NODES_CONF}" 'REPO_ROOT_FAKE=1')"
-chk "KUBESPRAY_VERSION = 最新版本 ${LATEST_VER}" "${LATEST_VER}" "$(_val "${out}" KUBESPRAY_VERSION)"
+chk "KUBESPRAY_VERSION = 默认版本 ${EXPECT_VER}" "${EXPECT_VER}" "$(_val "${out}" KUBESPRAY_VERSION)"
+
+echo "== ①b 绕过 defaults 层(未钉) → 仍取最新 =="
+out_latest="$(CLUSTER_DEFAULTS_CONF=/nonexistent _probe "${NODES_CONF}" 'X=1')"
+chk "KUBESPRAY_VERSION = 最新版本 ${LATEST_VER}" "${LATEST_VER}" \
+    "$(_val "${out_latest}" KUBESPRAY_VERSION)"
 
 echo "== ② 资产目录 = <root>/kubespray/<版本>, 且 LOCAL_REPO_DIR == 资产目录 =="
 chk "OFFLINE_FILES_ROOT" "${REPO_ROOT}/deployments/offline-files" "$(_val "${out}" OFFLINE_FILES_ROOT)"
 chk "OFFLINE_FILES_DIR 带版本层" \
-    "${REPO_ROOT}/deployments/offline-files/kubespray/${LATEST_VER}" "$(_val "${out}" OFFLINE_FILES_DIR)"
+    "${REPO_ROOT}/deployments/offline-files/kubespray/${EXPECT_VER}" "$(_val "${out}" OFFLINE_FILES_DIR)"
 chk "LOCAL_REPO_DIR == OFFLINE_FILES_DIR" "$(_val "${out}" OFFLINE_FILES_DIR)" "$(_val "${out}" LOCAL_REPO_DIR)"
-if [ "${LATEST_VER}" = "${TREE_VER}" ]; then
+if [ "${EXPECT_VER}" = "${TREE_VER}" ]; then
     _base_expected="${REPO_ROOT}/deployments/kubespray"
 else
-    _base_expected="${REPO_ROOT}/deployments/kubespray/versions/${LATEST_VER}"
+    _base_expected="${REPO_ROOT}/deployments/kubespray/versions/${EXPECT_VER}"
 fi
-chk "KUBESPRAY_BASE_DIR = 最新版本运行根" "${_base_expected}" "$(_val "${out}" KUBESPRAY_BASE_DIR)"
+chk "KUBESPRAY_BASE_DIR = 默认版本运行根" "${_base_expected}" "$(_val "${out}" KUBESPRAY_BASE_DIR)"
 
 echo "== ③ 不再有 CLUSTER_NAME 幽灵层 =="
 case "$(_val "${out}" LOCAL_REPO_DIR)" in
@@ -290,7 +299,7 @@ else
     echo "  skip curl .deb 主包集断言(os/packages 未备料 —— 纯 checkout/CI 属正常)"
 fi
 
-echo "== ⑪ 默认版本 = 最新(用户口径); 本地临时版本不进默认; 目录副本回退 =="
+echo "== ⑪ 默认 = defaults 钉值(未钉 = 最新); 本地临时版本不进默认; 目录副本回退 =="
 # 带夹具根的探针(OFFLINE_FILES_ROOT 指向夹具, 用于"版本目录自带档案副本"的回退路径)
 _probe_root() { # _probe_root <offline_root> <版本|-> <conf 行...>
     local root="$1" ver="$2"; shift 2
@@ -304,21 +313,22 @@ _probe_root() { # _probe_root <offline_root> <版本|-> <conf 行...>
       printf 'KUBESPRAY_VERSION=%s\nK8S_VERSION=%s\n' "${KUBESPRAY_VERSION}" "${K8S_VERSION:-}" )
     rm -f "${c}"
 }
-# (1) 默认 = max(仓库树版本, 有入库档案的版本) —— 当前 = LATEST_VER
+# (1) 默认 = cluster.defaults.conf 钉值(当前 v2.32.0); 未钉时 = max(仓库树, 有入库档案的版本)
 outd="$(_probe "${NODES_CONF}" 'X=1')"
-chk "默认 = 最新版本(${LATEST_VER})" "${LATEST_VER}" "$(_val "${outd}" KUBESPRAY_VERSION)"
+chk "默认 = 钉值/最新(${EXPECT_VER})" "${EXPECT_VER}" "$(_val "${outd}" KUBESPRAY_VERSION)"
 # (2)(4) 夹具: 一个只有"版本目录自带档案副本"的版本(v9.9.9), 无入库档案
 _troot="$(mktemp -d)"; mkdir -p "${_troot}/kubespray/v9.9.9"
 printf 'LOCAL_ONLY\n' > "${_troot}/kubespray/v9.9.9/LOCAL_ONLY"
 printf 'KUBESPRAY_VERSION=v9.9.9\nK8S_VERSION=v9.9.9\n' > "${_troot}/kubespray/v9.9.9/VERSION.profile"
-out_lo="$(_probe_root "${_troot}" - "${NODES_CONF}" 'X=1')"
+# (2) 绕过 defaults 层(模拟"未钉")→ 本地临时版本仍不进默认
+out_lo="$(CLUSTER_DEFAULTS_CONF=/nonexistent _probe_root "${_troot}" - "${NODES_CONF}" 'X=1')"
 chk "本地临时版本(无入库档案)不进默认" "${LATEST_VER}" "$(_val "${out_lo}" KUBESPRAY_VERSION)"
-# (3) 临时加一个更高的**入库档案** → 默认跟随(用完即删; trap 兜底)
+# (3) 绕过 defaults 层(模拟"未钉")→ 临时加一个更高的**入库档案**, 默认跟随(用完即删; trap 兜底)
 _fake_prof="${REPO_ROOT}/deployments/config/profiles/v9.9.9.profile"
 trap 'rm -f "${_fake_prof}"' EXIT
 printf 'KUBESPRAY_VERSION=v9.9.9\nK8S_VERSION=v9.9.9\n' > "${_fake_prof}"
-out_hi="$(_probe "${NODES_CONF}" 'X=1')"
-chk "默认跟随最新入库档案(v9.9.9)" "v9.9.9" "$(_val "${out_hi}" KUBESPRAY_VERSION)"
+out_hi="$(CLUSTER_DEFAULTS_CONF=/nonexistent _probe "${NODES_CONF}" 'X=1')"
+chk "未钉时默认跟随最新入库档案(v9.9.9)" "v9.9.9" "$(_val "${out_hi}" KUBESPRAY_VERSION)"
 rm -f "${_fake_prof}"; trap - EXIT
 # (4) 显式选"只有目录副本"的版本 → 不硬失败, 且钉子取自副本
 out_cp="$(_probe_root "${_troot}" v9.9.9 "${NODES_CONF}" 'K8S_VERSION="${K8S_VERSION:-v0.0.0}"')"
