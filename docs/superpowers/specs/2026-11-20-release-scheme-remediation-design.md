@@ -23,7 +23,9 @@
 6. 验证只到文件/哈希层，没有真实安装闭环；
 7. 不可变与原子发布不足，旧链路可以原地覆盖已发布树；
 8. 分支/base 线治理混乱（同一时刻存在多条 base 线）；
-9. Harbor/MinIO 双存储与凭据拓扑缺少统一前置检查。
+9. Harbor/MinIO 双存储与凭据拓扑缺少统一前置检查；
+10. release modules 直接依赖 installer 的 `lib-common.sh`、配置变量和模块框架，
+    但没有版本化的 modules API / `compat` 契约，跨仓兼容性未验证。
 
 本文给出目标流程、数据契约、整改清单、验收门禁和迁移步骤。
 
@@ -102,6 +104,23 @@ offline-files/cubestack-operator/
 - `tools/fetch-offline.sh --verify` 只校验 `offline-files/SHA256SUMS` 与 `_SUCCESS` 绑定；
 - `verify_cubestack_operator` 的冒烟 CR 显式禁用全部组件，只验证 operator/CRD/镜像来源；
 - `deliver.yml` 主要跑 `--list-steps` + 离线校验，不做真实集群全量安装。
+
+### 2.7 release modules 与 installer 的运行时耦合（未版本化 ABI）
+
+`cubestack-release/modules` 不是独立可执行代码，而是 installer 的“模块插件 + 共享运行时库”：
+
+| 依赖 | 证据 | 影响 |
+|---|---|---|
+| 直接 source `lib-common.sh` | `25_cubestack_operator.sh` 及 `40_...`–`52_...` 组件薄壳 | installer 函数/变量改名或语义变化即断 |
+| `lib-bootstrap.sh` 定位并 source installer 库 | `modules/tools/k8s/lib-bootstrap.sh` 的 `_cs_find_installer_lib()` | 找不到库直接 exit；依赖 `CUBESTACK_SCRIPTS_DIR` 等 |
+| 共享函数 | `load_config` 21 个文件、`init_remote_kubectl` 7、`push_image_skopeo`/`wait_registry_ready`/`skopeo_require`/`find_offline_tar` 各 3 | 推送/等待/offline 解析行为耦合 |
+| 共享变量/配置 | `SSH_KEY` 19、`NODES` 18、`OFFLINE_FILES_ROOT`/`REGISTRY_*`/`first_master_ip` 各 5、`REPO_ROOT` 6 | 发布锁无法约束这些语义 |
+| 模块框架 | 模块头的 `MODULE/PHASE/DEFAULT/REPEAT/TOGGLE/REQUIRES` 由 installer `deploy-cluster.sh`/`lib-module.sh` 解析；模块被软链进 `.modules-merged.*` | 模块是 installer 插件，不是独立 CLI |
+| 反向依赖 | installer `lib-common.sh:1057` 重写 `CUBESTACK_OPERATOR_OFFLINE_DIR`；`offline-sync.py` 处理 operator chart/tag；`verifier/archive.py` 校验 operator chart | operator/release 约定同时存在于 installer |
+| 版本契约 | release lock 分别 pin `modules` tar 和 `cli` image，但无 `compat`/`modules_api`/`installer_min` | 不兼容组合可以发布 |
+| 测试 | release 单测用 stub `lib-common.sh`（如 `test-cubestack-placement.sh`）；installer `check-modules.sh` 只覆盖基线模块 | 真实兼容性未被验证 |
+
+结论：这不是“充分解耦”，而是**显式但未版本化的共享 ABI**。`lib-bootstrap.sh` 让依赖可见且失败关闭是优点；但函数/变量面太宽、没有兼容性声明和跨仓测试，仍属于高风险运行时耦合。
 
 ---
 
@@ -319,6 +338,26 @@ platform_catalog:
   - 失败关闭，不生成半成品。
 - **验收**：缺凭据时在打包/安装开始前失败，错误信息指出具体仓库/项目。
 
+#### P1-5 release modules ↔ installer ABI 契约
+
+- **问题**：release modules 直接 source installer 的 `lib-common.sh` 和模块框架，依赖数十个函数/变量；
+  发布锁没有 `compat` 字段，跨仓没有兼容性测试（详见 §2.7）。
+- **改动**：
+  - 定义 `CUBESTACK_MODULES_API=<n>` 和“公共 ABI”清单（必需函数/变量/环境变量）；
+    `lib-bootstrap.sh` source 后校验，installer 拒绝加载不兼容 modules；
+  - release lock 增加 `compat: { installer_min, modules_api }`，installer 在 release 模式启动时校验；
+  - 在 cross-repo contract CI（P1-1）中用锁定的 CLI image + modules tar 跑
+    `--list-steps`、release modules 的 `bash -n` / 静态检查、smoke install；
+  - 把 release 依赖的 installer 原语标记为稳定子集；长期抽 `cubestack-common`
+    或 vendored shim，避免直接 source 内部库；
+  - operator 专属逻辑（`CUBESTACK_OPERATOR_OFFLINE_DIR` 重写、operator chart 校验、
+    teardown 恢复）迁出 installer 或改为数据驱动。
+- **验收**：
+  - 不兼容的 CLI/modules 组合在部署开始前明确失败；
+  - release modules 不再引用未列入公共 ABI 的函数/变量；
+  - cross-repo contract CI 覆盖 release modules；
+  - release 单测中的 stub 仅用于纯逻辑测试，契约测试使用真实 installer 库。
+
 ### P2（治理与长期质量）
 
 #### P2-1 镜像名/路径唯一性
@@ -455,6 +494,8 @@ offline-files/
 - [ ] **T8（P1-3）** 迁移/生成 operator 配置，收敛 installer 运行期旋钮。
 - [ ] **T9（P1-4）** 统一 Harbor/MinIO 凭据 preflight。
 - [ ] **T10（P2）** 全局镜像名唯一性、版本/base 治理、发布 provenance 命令与文档。
+- [ ] **T11（P1-5）** 定义 release modules 公共 ABI + `compat` 字段，接入 cross-repo contract CI；
+      把 operator 专属逻辑移出 installer，避免未版本化的共享运行时耦合。
 
 ---
 
@@ -471,6 +512,11 @@ offline-files/
    `CUBESTACK_OPERATOR_HARBOR_*` 两组；建议统一到单一凭据源，按项目授权。
 5. **build id 格式**：建议 `<version>+<UTC timestamp>.<pins-commit>`；是否同时保留
    语义化版本号，由产品发布流程决定。
+6. **modules ABI 形态**：短期把 installer `lib-common.sh` 的一个子集标记为稳定 ABI；
+   长期抽 `cubestack-common` 还是 vendored shim？建议先做稳定子集 + 契约测试，
+   再评估抽包成本。
+7. **compat 版本策略**：`modules_api` 单调递增；release lock 声明 `installer_min`；
+   是否允许 modules 向后兼容多个 installer 版本？建议至少 N/N-1 两个版本。
 
 ---
 
