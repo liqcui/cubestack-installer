@@ -2,6 +2,9 @@
 
 > 适用范围：`release-2.1` 及后续版本。
 > 发布打包已迁到外部发布流程。本仓库不再产出发布包，只负责**部署**。
+>
+> 发布方案整改设计与任务清单见
+> [`superpowers/specs/2026-11-20-release-scheme-remediation-design.md`](superpowers/specs/2026-11-20-release-scheme-remediation-design.md)。
 
 ## 职责划分
 
