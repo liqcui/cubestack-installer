@@ -230,6 +230,8 @@ spec:
 >
 > **完整示例文件**: [docs/hami-example-pods.yaml](hami-example-pods.yaml)
 > (sGPU 共享 Pod + 拓扑感知 Pod, 可直接 `kubectl apply`)。
+> **真实消费 demo**: [docs/hami-mem-demo.yaml](hami-mem-demo.yaml)(torch 分配 2GiB +
+> 持续算力,配合 §8.5 的 `mx-smi` 观察)。
 
 ## 6. 验证口径(`--steps verify_hami`)
 
@@ -399,6 +401,85 @@ kubectl delete ns hami-demo
 #   把 metax-device-config 与 CR cmInit 的 mode 改回 "native", 再重启 metax-gpu-device
 ```
 
+### 8.5 真实显存/算力消费 + worker 节点 `mx-smi` 观察
+
+示例清单: [docs/hami-mem-demo.yaml](hami-mem-demo.yaml)
+(申请 `sgpu=1 / vcore=25 / vmemory=8`,torch 实际分配 **2GiB** 并持续 matmul)。
+
+```bash
+kubectl create ns hami-demo 2>/dev/null || true
+kubectl apply -f docs/hami-mem-demo.yaml
+kubectl -n hami-demo wait --for=condition=Ready pod/hami-mem-demo --timeout=360s
+kubectl -n hami-demo logs hami-mem-demo        # allocated_bytes 2147483648
+kubectl -n hami-demo get pod hami-mem-demo -o jsonpath='{.metadata.annotations}' \
+  | jq 'with_entries(select(.key|test("sgpu|devices-allocated")))'
+
+# 在 GPU worker 节点上查看消耗(本 demo 落在 worker01)
+ssh <gpu-node> mx-smi
+ssh <gpu-node> mx-smi --show-process
+ssh <gpu-node> mx-smi --show-usage
+```
+
+**实测输出(worker01, 2026-11-23)**:
+
+Pod 注解:
+
+```json
+"hami.io/metax-sgpu-devices-allocated": "GPU-3d5d32e3-...,Metax-SGPU,8192,25:;"
+"metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-3d5d32e3-...\",\"compute\":25,\"vRam\":8192}]]"
+```
+
+`mx-smi` 主表(物理卡视角,GPU2 有切片在跑):
+
+```text
+| 2     MetaX C550 | 2           Off | 0000:63:00.0        | 54%          Enabled |
+| 300W / 450W      | 48C          P9 | 3184/65536 MiB      | Available            |
+```
+
+`mx-smi` **Sliced GPU** 表(vGPU 切片视角):
+
+```text
+| Minor    GPU    sGPU-Id    Compute | Vram Quota          | sGPU-Util            |
+| 018      2      2          25%     | 2324/8192 MiB       | 54%                  |
+```
+
+`mx-smi --show-process`(按进程):
+
+```text
+| Process:                                                                        |
+|  GPU                    PID         Process Name                 GPU Memory     |
+|                                                                  Usage(MiB)     |
+|  2-s2                587067         python3                      2324           |
+```
+
+`mx-smi --show-usage`(按 GPU):
+
+```text
+GPU#2  MXC550  0000:63:00.0
+    Utilization
+        GPU                                       : 54 %
+        VPUE                                      : 0 %
+        VPUD                                      : 0 %
+```
+
+**如何解读**:
+
+| 视图 | 命令 | 含义 |
+|---|---|---|
+| 主 GPU 表 | `mx-smi` | 物理卡整体利用率/显存(含该卡上全部 vGPU 切片) |
+| Sliced GPU | `mx-smi` | 每个 vGPU 切片:`Compute` 配额、`Vram Quota 已用/配额`、`sGPU-Util` |
+| 进程 | `mx-smi --show-process` | 每个 GPU 进程的 PID/名称/显存(`2-s2` = GPU2 的 sGPU-2) |
+| 利用率 | `mx-smi --show-usage` | GPU / VPUE / VPUD 各类利用率 |
+| 其他 | `mx-smi --show-memory`、`mx-smi -i <gpu>`、`mx-smi topo -m` | 显存/单卡/拓扑 |
+
+说明:
+- `kubectl top pod/node` 只显示 CPU/内存,**不显示 GPU**;GPU 消耗用 `mx-smi`、Pod 注解和 HAMi 日志。
+- 节点 `metax-tech.com/sgpu` allocatable 是**切片容量**(本环境 128/节点),不会按 slice 递减;
+  实际每片用量看 `mx-smi` Sliced GPU / `--show-process`,分配对象看 Pod 注解。
+- 2GiB 分配在 Sliced GPU 表中显示为 `2324/8192 MiB`(含运行时开销),`sGPU-Util` 54%;
+  主表物理显存 `3184/65536 MiB`(包含其他切片/进程)。
+- 测试时为复用已缓存的 maca-pytorch 镜像固定了 worker01;通用示例可去掉 `nodeSelector`。
+
 ## 9. 常用命令速查
 
 ```bash
@@ -418,14 +499,19 @@ kubectl -n kube-system logs deploy/hami-scheduler -c kube-scheduler --tail=200
 # ---------- 消费 / 查看 vGPU ----------
 kubectl create ns hami-demo 2>/dev/null || true
 kubectl apply -f docs/hami-example-pods.yaml
+kubectl apply -f docs/hami-mem-demo.yaml          # 真实 torch 2GiB 消费者
 kubectl -n hami-demo get pods -o wide
+kubectl -n hami-demo logs hami-mem-demo
 kubectl -n hami-demo get pod <pod> -o jsonpath='{.spec.schedulerName}'   # hami-scheduler
 kubectl -n hami-demo get pod <pod> -o jsonpath='{.metadata.annotations}' \
   | jq 'with_entries(select(.key|test("sgpu|devices-allocated")))'
 kubectl get nodes -o json | jq -r '.items[] |
   select(.status.allocatable["metax-tech.com/sgpu"] != null) |
   "\(.metadata.name): sgpu=\(.status.allocatable["metax-tech.com/sgpu"])"'
-ssh <gpu-node> mx-smi        # Sliced GPU: Compute / Vram Quota / sGPU-Id
+ssh <gpu-node> mx-smi                 # 主表 + Sliced GPU(已用/配额)
+ssh <gpu-node> mx-smi --show-process  # 进程级显存
+ssh <gpu-node> mx-smi --show-usage    # GPU/VPUE/VPUD 利用率
+ssh <gpu-node> mx-smi --show-memory
 kubectl -n hami-demo describe pod <pod> | grep -A2 FilteringSucceed
 
 # ---------- 拓扑感知 ----------

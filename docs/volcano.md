@@ -89,6 +89,7 @@ sudo env CUBESTACK_MODULE_ACTION=uninstall \
 ## 5. 示例 Volcano Job
 
 完整文件: `docs/volcano-example-job.yaml`(2 个 task replica，每个 25% 算力 / 8GiB)。
+真实消费 demo: `docs/volcano-mem-demo.yaml`(torch 分配 2GiB + 持续算力，见 §8.5)。
 
 ```yaml
 apiVersion: batch.volcano.sh/v1alpha1
@@ -149,13 +150,18 @@ kubectl -n volcano-system logs deploy/volcano-admission --tail=100
 # ---------- 创建 / 查看 Volcano Job ----------
 kubectl create ns hami-demo 2>/dev/null || true
 kubectl apply -f docs/volcano-example-job.yaml
+kubectl apply -f docs/volcano-mem-demo.yaml     # 真实 torch 2GiB 消费者
 kubectl -n hami-demo get vcjob
 kubectl -n hami-demo describe vcjob volcano-sgpu-demo
 kubectl -n hami-demo get pods -l volcano.sh/job-name=volcano-sgpu-demo -o wide
+kubectl -n hami-demo logs -l volcano.sh/job-name=volcano-mem-demo
 kubectl -n hami-demo get pod <pod> -o jsonpath='{.spec.schedulerName}'   # hami-scheduler
 kubectl -n hami-demo get pod <pod> -o jsonpath='{.metadata.annotations}' \
   | jq 'with_entries(select(.key|test("sgpu|devices-allocated")))'
-ssh <gpu-node> mx-smi        # Sliced GPU: Compute / Vram Quota
+ssh <gpu-node> mx-smi                 # 主表 + Sliced GPU(已用/配额)
+ssh <gpu-node> mx-smi --show-process  # 进程级显存
+ssh <gpu-node> mx-smi --show-usage    # GPU/VPUE/VPUD 利用率
+ssh <gpu-node> mx-smi --show-memory
 
 # ---------- 验证 / 清理 ----------
 sudo ./deploy-cluster.sh --steps verify_volcano
@@ -251,6 +257,58 @@ kubectl -n hami-demo delete vcjob volcano-sgpu-demo
 - 单独卸载(`CUBESTACK_MODULE_ACTION=uninstall`):**RC=0**;
   `volcano-system` 命名空间、12 个 CRD、helm release 全部清理;HAMi scheduler 未受影响。
 - 重新 `--steps volcano`:**RC=0**;3 个镜像已存在 → 跳过;sample Job 重建后再次 **Running**。
+
+### 8.5 Volcano Job 真实消费 demo + worker `mx-smi`
+
+示例清单: [docs/volcano-mem-demo.yaml](volcano-mem-demo.yaml)
+(Volcano Job,1 task,`sgpu=1/vcore=25/vmemory=8`;torch 分配 2GiB 并持续 matmul)。
+
+```bash
+kubectl apply -f docs/volcano-mem-demo.yaml
+kubectl -n hami-demo get vcjob volcano-mem-demo
+kubectl -n hami-demo logs -l volcano.sh/job-name=volcano-mem-demo
+kubectl -n hami-demo get pod -l volcano.sh/job-name=volcano-mem-demo \
+  -o jsonpath='{.items[0].spec.schedulerName}'          # hami-scheduler
+kubectl -n hami-demo get pod -l volcano.sh/job-name=volcano-mem-demo \
+  -o jsonpath='{.items[0].metadata.annotations}' \
+  | jq 'with_entries(select(.key|test("sgpu|devices-allocated")))'
+
+# 在 GPU worker 节点查看实际消耗
+ssh <gpu-node> mx-smi
+ssh <gpu-node> mx-smi --show-process
+ssh <gpu-node> mx-smi --show-usage
+```
+
+**实测输出(worker01, 2026-11-23)**:
+
+```text
+NAME               STATUS    MINAVAILABLE   RUNNINGS   QUEUE
+volcano-mem-demo   Running   1              1          default
+
+pod=volcano-mem-demo-mem-0  node=worker01  schedulerName=hami-scheduler
+allocated_bytes 2147483648
+hami.io/metax-sgpu-devices-allocated:
+  GPU-096d8582-...,Metax-SGPU,8192,25
+```
+
+`mx-smi` Sliced GPU(同时有普通 Pod demo `2-s2` 与 Volcano Job demo `1-s2`):
+
+```text
+| Minor    GPU    sGPU-Id    Compute | Vram Quota          | sGPU-Util            |
+| 019      1      2          25%     | 2324/8192 MiB       | 55%                  |
+| 018      2      2          25%     | 2324/8192 MiB       | 54%                  |
+```
+
+`mx-smi --show-process`:
+
+```text
+|  1-s2                589137         python3                      2324           |  # Volcano Job
+|  2-s2                587067         python3                      2324           |  # 普通 Pod
+```
+
+解读与 HAMi 文档一致:主表是物理卡;Sliced GPU 是每个 vGPU 切片的 **已用/配额** 与算力
+利用率;`--show-process` 按 PID 显示进程显存;`kubectl top` 不显示 GPU。
+详见 [docs/hami.md §8.5](hami.md#85-真实显存算力消费--worker-节点-mx-smi-观察)。
 
 ## 9. 故障排查
 
