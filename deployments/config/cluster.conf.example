@@ -120,6 +120,7 @@ REGISTRY_ENABLED="${REGISTRY_ENABLED:-1}"               # 集群内置 Registry(
 
 # ---- 附加组件开关(阶段四; 参数见 defaults §4.x) ----
 GPU_OPERATOR_ENABLED="${GPU_OPERATOR_ENABLED:-true}"    # 沐曦 GPU Operator(默认启用; 见 4.1)
+HAMI_ENABLED="${HAMI_ENABLED:-false}"                   # HAMi 调度器(沐曦 GPU 共享/拓扑感知; 依赖 GPU_OPERATOR_ENABLED; --enable hami / --steps hami; 见 4.1b)
 NVIDIA_GPU_OPERATOR_ENABLED="${NVIDIA_GPU_OPERATOR_ENABLED:-false}"  # NVIDIA GPU Operator(默认关; --enable nvidia_gpu_operator; 见 4.7b)
 ONLINE_DEPLOY_NVIDIA_GPU_OPERATOR="${ONLINE_DEPLOY_NVIDIA_GPU_OPERATOR:-false}"  # NVIDIA 部署模式: false=离线(tar→内置 registry; 默认) / true=在线(chart 直拉; 只可达 Harbor 时配 NVIDIA_GPU_OPERATOR_ONLINE_IMAGE_BASE, 见 4.7b)
 KEYCLOAK_ENABLED="${KEYCLOAK_ENABLED:-false}"           # 统一认证(占位; 见 4.4)

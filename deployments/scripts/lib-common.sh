@@ -1259,6 +1259,7 @@ load_config() {
         # 这些变量默认写死指向 dev offline-files; release 模式统一重定向到版本树。
         METAX_OFFLINE_DIR="${OFFLINE_FILES_ROOT}/metax-gpu"
         METAX_PKG_DIR="${METAX_OFFLINE_DIR}"
+        HAMI_OFFLINE_DIR="${OFFLINE_FILES_ROOT}/hami"
         CUBESTACK_OPERATOR_OFFLINE_DIR="${OFFLINE_FILES_ROOT}/cubestack-operator"
         MULTUS_SAVE_DIR="${OFFLINE_FILES_ROOT}/multus"
         NVIDIA_GPU_OPERATOR_OFFLINE_DIR="${OFFLINE_FILES_ROOT}/nvidia-gpu-operator"
@@ -1268,6 +1269,7 @@ load_config() {
         MODEL_IMAGES_SAVE_DIR="${OFFLINE_FILES_ROOT}/model-collection"
         CEPH_IMAGE_DIR="${OFFLINE_FILES_ROOT}/kubespray/${KUBESPRAY_VERSION}/images"
         export CUBESTACK_RELEASE_ROOT METAX_OFFLINE_DIR METAX_PKG_DIR \
+               HAMI_OFFLINE_DIR \
                CUBESTACK_OPERATOR_OFFLINE_DIR MULTUS_SAVE_DIR \
                NVIDIA_GPU_OPERATOR_OFFLINE_DIR RDMA_SAVE_DIR \
                NETSHOOT_SAVE_DIR NETSHOOT_BASE_TAR \
