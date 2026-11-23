@@ -1,0 +1,3 @@
+Error from server (Forbidden): error when creating "/root/hv-test-20261124/b1-fullcard.yaml": admission webhook "vgpu.hami.io" denied the request: invalid metax sgpu request for container "c": core request 400 is out of range (must be an integer between 0 and 100)
+phase=
+Error from server (NotFound): pods "b1-fullcard" not found

@@ -1,0 +1,50 @@
+Name:             b1-fullcard
+Namespace:        hami-demo
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           <none>
+Annotations:      metax-tech.com/sgpu-qos-policy: best-effort
+Status:           Pending
+IP:               
+IPs:              <none>
+Containers:
+  c:
+    Image:      registry.cubestack.io:5000/suanova/maca-pytorch:3.8.5.2-py312-torch2.8-v2.1-SNAPSHOT-20261121-78a83fb
+    Port:       <none>
+    Host Port:  <none>
+    Command:
+      sleep
+      infinity
+    Limits:
+      metax-tech.com/sgpu:     16
+      metax-tech.com/vcore:    100
+      metax-tech.com/vmemory:  128
+    Requests:
+      metax-tech.com/sgpu:     16
+      metax-tech.com/vcore:    100
+      metax-tech.com/vmemory:  128
+    Environment:               <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-24ktz (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-24ktz:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age                From            Message
+  ----     ------            ----               ----            -------
+  Warning  FailedScheduling  22s                hami-scheduler  0/5 nodes are available: 2 8/16 NodeInsufficientDevice, 3 node unregistered. no new claims to deallocate, preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod.
+  Warning  FailedScheduling  22s                hami-scheduler  0/5 nodes are available: 2 8/16 NodeInsufficientDevice, 3 node unregistered. no new claims to deallocate, preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod.
+  Warning  FilteringFailed   22s (x2 over 22s)  hami-scheduler  2 nodes NodeInsufficientDevice(cubestack-k8s-worker01,cubestack-k8s-worker02)
+  Warning  FilteringFailed   22s (x2 over 22s)  hami-scheduler  no available node, 5 nodes do not meet

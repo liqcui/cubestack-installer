@@ -1,0 +1,23 @@
+pod/b1-fullcard created
+NAME          READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+b1-fullcard   0/1     Pending   0          3s    <none>   <none>   <none>           <none>
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-24ktz:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age              From            Message
+  ----     ------            ----             ----            -------
+  Warning  FailedScheduling  3s               hami-scheduler  0/5 nodes are available: 2 8/16 NodeInsufficientDevice, 3 node unregistered. no new claims to deallocate, preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod.
+  Warning  FailedScheduling  3s               hami-scheduler  0/5 nodes are available: 2 8/16 NodeInsufficientDevice, 3 node unregistered. no new claims to deallocate, preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod.
+  Warning  FilteringFailed   3s (x2 over 3s)  hami-scheduler  2 nodes NodeInsufficientDevice(cubestack-k8s-worker01,cubestack-k8s-worker02)
+  Warning  FilteringFailed   3s (x2 over 3s)  hami-scheduler  no available node, 5 nodes do not meet

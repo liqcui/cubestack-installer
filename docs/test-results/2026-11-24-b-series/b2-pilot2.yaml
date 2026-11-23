@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: b2-pilot2
+  namespace: hami-demo
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      schedulerName: hami-scheduler
+      restartPolicy: Never
+      containers:
+        - name: c
+          image: registry.cubestack.io:5000/suanova/maca-pytorch:3.8.5.2-py312-torch2.8-v2.1-SNAPSHOT-20261121-78a83fb
+          imagePullPolicy: IfNotPresent
+          command: ["/opt/conda/bin/python3.12", "/w/bench.py", "--n", "2048", "--seconds", "10"]
+          volumeMounts:
+            - name: bench
+              mountPath: /w
+          resources:
+            limits:
+              metax-tech.com/sgpu: 1
+              metax-tech.com/vmemory: 8
+              metax-tech.com/vcore: 100
+      volumes:
+        - name: bench
+          configMap:
+            name: b2-bench

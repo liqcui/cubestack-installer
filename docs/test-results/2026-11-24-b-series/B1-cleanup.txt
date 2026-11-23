@@ -1,0 +1,3 @@
+pod "b1-fullcard" deleted from hami-demo namespace
+namespace "hami-demo" deleted
+worker01 sliced rows: 0

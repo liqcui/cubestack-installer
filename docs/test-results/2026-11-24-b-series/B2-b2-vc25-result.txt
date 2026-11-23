@@ -1,0 +1,8 @@
+===== b2-vc25 =====
+job.batch/b2-vc25 created
+pod=b2-vc25-shssb node=cubestack-k8s-worker01 ip=10.66.3.39
+job.batch/b2-vc25 condition met
+WAIT_RC=0
+device MetaX C550
+{"n": 2048, "seconds": 60.0, "iters": 166134, "iter_per_sec": 2768.89, "tflops": 47.57}
+job.batch "b2-vc25" deleted from hami-demo namespace

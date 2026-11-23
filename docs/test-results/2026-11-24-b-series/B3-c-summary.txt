@@ -1,0 +1,43 @@
+===== B3 group c (/root/hv-test-20261124/b3-8pods-noannot.yaml) =====
+pod/b3-c-0 created
+pod/b3-c-1 created
+pod/b3-c-2 created
+pod/b3-c-3 created
+pod/b3-c-4 created
+pod/b3-c-5 created
+pod/b3-c-6 created
+pod/b3-c-7 created
+pod/b3-c-0 condition met
+pod/b3-c-1 condition met
+pod/b3-c-2 condition met
+pod/b3-c-3 condition met
+pod/b3-c-4 condition met
+pod/b3-c-5 condition met
+pod/b3-c-6 condition met
+pod/b3-c-7 condition met
+NAME     READY   STATUS    RESTARTS   AGE   IP               NODE                     NOMINATED NODE   READINESS GATES
+b3-c-0   1/1     Running   0          27s   10.233.105.236   cubestack-k8s-worker01   <none>           <none>
+b3-c-1   1/1     Running   0          27s   10.233.105.246   cubestack-k8s-worker01   <none>           <none>
+b3-c-2   1/1     Running   0          27s   10.233.105.222   cubestack-k8s-worker01   <none>           <none>
+b3-c-3   1/1     Running   0          27s   10.233.105.252   cubestack-k8s-worker01   <none>           <none>
+b3-c-4   1/1     Running   0          27s   10.233.105.237   cubestack-k8s-worker01   <none>           <none>
+b3-c-5   1/1     Running   0          27s   10.233.105.249   cubestack-k8s-worker01   <none>           <none>
+b3-c-6   1/1     Running   0          27s   10.233.105.245   cubestack-k8s-worker01   <none>           <none>
+b3-c-7   1/1     Running   0          27s   10.233.105.251   cubestack-k8s-worker01   <none>           <none>
+--- placement ---
+c	b3-c-0	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-e3980126-5b13-7fc1-7d68-cbda75ed398b","bdf":"0000:e4:00.0"}],"status":"finished"}]
+c	b3-c-1	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-cacd9404-9913-9ae3-8eff-1c2ca3edfe7d","bdf":"0000:e3:00.0"}],"status":"finished"}]
+c	b3-c-2	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-d55b9a7f-ef31-67f9-1775-fe39091bd103","bdf":"0000:a4:00.0"}],"status":"finished"}]
+c	b3-c-3	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-fab62c42-b808-1963-5eea-1456085823fd","bdf":"0000:a3:00.0"}],"status":"finished"}]
+c	b3-c-4	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-14e385b6-169b-ae68-9c7d-67ea0a3502f8","bdf":"0000:66:00.0"}],"status":"finished"}]
+c	b3-c-5	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-3d5d32e3-93b9-413b-6fcf-467d6dc30bd5","bdf":"0000:63:00.0"}],"status":"finished"}]
+c	b3-c-6	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-096d8582-a090-0044-931f-6716e03000ec","bdf":"0000:26:00.0"}],"status":"finished"}]
+c	b3-c-7	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-996c867c-3fbd-485a-a3d4-3a64f9ef98be","bdf":"0000:23:00.0"}],"status":"finished"}]
+pod "b3-c-0" deleted from hami-demo namespace
+pod "b3-c-1" deleted from hami-demo namespace
+pod "b3-c-2" deleted from hami-demo namespace
+pod "b3-c-3" deleted from hami-demo namespace
+pod "b3-c-4" deleted from hami-demo namespace
+pod "b3-c-5" deleted from hami-demo namespace
+pod "b3-c-6" deleted from hami-demo namespace
+pod "b3-c-7" deleted from hami-demo namespace
