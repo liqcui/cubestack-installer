@@ -1,0 +1,4 @@
+b2c-4x-0	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-07daa3b1-09a3-4f06-713e-bd9b93bde9ba","bdf":"0000:23:00.0","index":0}],"status":"finished"}]
+b2c-4x-1	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-03d09bac-952b-a9f2-5df0-3594d7657306","bdf":"0000:23:00.0","index":2}],"status":"finished"}]
+b2c-4x-2	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-d12d2694-1937-a9e7-3bdf-da1c23a17351","bdf":"0000:23:00.0","index":1}],"status":"finished"}]
+b2c-4x-3	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-11cd648b-bda5-8b2f-7bff-8c85ef078549","bdf":"0000:23:00.0","index":3}],"status":"finished"}]

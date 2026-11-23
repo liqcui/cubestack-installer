@@ -1,0 +1,43 @@
+===== B3 group c (/root/hv-test-20261124/b3s-8pods-noannot.yaml) =====
+pod/b3s-c-0 created
+pod/b3s-c-1 created
+pod/b3s-c-2 created
+pod/b3s-c-3 created
+pod/b3s-c-4 created
+pod/b3s-c-5 created
+pod/b3s-c-6 created
+pod/b3s-c-7 created
+pod/b3s-c-0 condition met
+pod/b3s-c-1 condition met
+pod/b3s-c-2 condition met
+pod/b3s-c-3 condition met
+pod/b3s-c-4 condition met
+pod/b3s-c-5 condition met
+pod/b3s-c-6 condition met
+pod/b3s-c-7 condition met
+NAME      READY   STATUS    RESTARTS   AGE   IP               NODE                     NOMINATED NODE   READINESS GATES
+b3s-c-0   1/1     Running   0          26s   10.233.105.234   cubestack-k8s-worker01   <none>           <none>
+b3s-c-1   1/1     Running   0          26s   10.233.105.226   cubestack-k8s-worker01   <none>           <none>
+b3s-c-2   1/1     Running   0          26s   10.233.105.213   cubestack-k8s-worker01   <none>           <none>
+b3s-c-3   1/1     Running   0          26s   10.233.105.205   cubestack-k8s-worker01   <none>           <none>
+b3s-c-4   1/1     Running   0          26s   10.233.105.243   cubestack-k8s-worker01   <none>           <none>
+b3s-c-5   1/1     Running   0          26s   10.233.105.216   cubestack-k8s-worker01   <none>           <none>
+b3s-c-6   1/1     Running   0          26s   10.233.105.231   cubestack-k8s-worker01   <none>           <none>
+b3s-c-7   1/1     Running   0          26s   10.233.105.203   cubestack-k8s-worker01   <none>           <none>
+--- placement ---
+c	b3s-c-0	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-e36211c2-3bac-5bd5-7d36-7bd6d5947517","bdf":"0000:e4:00.0","index":0}],"status":"finished"}]
+c	b3s-c-1	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-31ad73c2-466d-8844-1b5f-4dd67a1fd8ec","bdf":"0000:e3:00.0","index":0}],"status":"finished"}]
+c	b3s-c-2	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-44c7103b-6a58-ba0f-ec31-b0d56e289e29","bdf":"0000:a4:00.0","index":0}],"status":"finished"}]
+c	b3s-c-3	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-71fce21e-201c-56f0-dbe4-b65260c4ca90","bdf":"0000:a3:00.0","index":0}],"status":"finished"}]
+c	b3s-c-4	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-934f95b8-366b-2507-6de9-d7086aa58771","bdf":"0000:66:00.0","index":0}],"status":"finished"}]
+c	b3s-c-5	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-60871849-9297-c342-a0f1-e853a6411d56","bdf":"0000:63:00.0","index":0}],"status":"finished"}]
+c	b3s-c-6	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-79044c58-bf06-8d79-832c-b42879ba3f83","bdf":"0000:26:00.0","index":0}],"status":"finished"}]
+c	b3s-c-7	cubestack-k8s-worker01	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-db6164e4-24d9-49c5-f56b-8c0c4c6353a7","bdf":"0000:23:00.0","index":0}],"status":"finished"}]
+pod "b3s-c-0" deleted from hami-demo namespace
+pod "b3s-c-1" deleted from hami-demo namespace
+pod "b3s-c-2" deleted from hami-demo namespace
+pod "b3s-c-3" deleted from hami-demo namespace
+pod "b3s-c-4" deleted from hami-demo namespace
+pod "b3s-c-5" deleted from hami-demo namespace
+pod "b3s-c-6" deleted from hami-demo namespace
+pod "b3s-c-7" deleted from hami-demo namespace

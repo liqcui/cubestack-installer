@@ -1,0 +1,10 @@
+===== cleanup blockers =====
+pod "b2c-blocker-0" deleted from hami-demo namespace
+pod "b2c-blocker-1" deleted from hami-demo namespace
+pod "b2c-blocker-2" deleted from hami-demo namespace
+pod "b2c-blocker-3" deleted from hami-demo namespace
+pod "b2c-blocker-4" deleted from hami-demo namespace
+pod "b2c-blocker-5" deleted from hami-demo namespace
+pod "b2c-blocker-6" deleted from hami-demo namespace
+namespace "hami-demo" deleted
+worker02 sliced rows: 0

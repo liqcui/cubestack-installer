@@ -1,0 +1,16 @@
+===== B2C group 2x (2x25%) =====
+pod/b2c-2x-0 created
+pod/b2c-2x-1 created
+NAME       READY   STATUS    RESTARTS   AGE   IP              NODE                     NOMINATED NODE   READINESS GATES
+b2c-2x-0   1/1     Running   0          7s    10.233.119.8    cubestack-k8s-worker02   <none>           <none>
+b2c-2x-1   1/1     Running   0          7s    10.233.119.26   cubestack-k8s-worker02   <none>           <none>
+--- placement ---
+--- results ---
+--- b2c-2x-0
+device MetaX C550
+{"n": 2048, "seconds": 60.0, "iters": 137683, "iter_per_sec": 2294.71, "tflops": 39.42}
+--- b2c-2x-1
+device MetaX C550
+{"n": 2048, "seconds": 60.0, "iters": 137951, "iter_per_sec": 2299.18, "tflops": 39.5}
+pod "b2c-2x-0" deleted from hami-demo namespace
+pod "b2c-2x-1" deleted from hami-demo namespace

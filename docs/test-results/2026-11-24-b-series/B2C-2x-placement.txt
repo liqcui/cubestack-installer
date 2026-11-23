@@ -1,0 +1,2 @@
+b2c-2x-0	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-128d8e20-40da-1be5-263f-6260c03eb5c7","bdf":"0000:23:00.0","index":0}],"status":"finished"}]
+b2c-2x-1	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-4c29f2b2-e608-6067-b4f3-06c69a58a0d1","bdf":"0000:23:00.0","index":1}],"status":"finished"}]

@@ -1,0 +1,28 @@
+===== B2C group 4x (4x25%) =====
+pod/b2c-4x-0 created
+pod/b2c-4x-1 created
+pod/b2c-4x-2 created
+pod/b2c-4x-3 created
+NAME       READY   STATUS    RESTARTS   AGE   IP              NODE                     NOMINATED NODE   READINESS GATES
+b2c-4x-0   1/1     Running   0          13s   10.233.119.57   cubestack-k8s-worker02   <none>           <none>
+b2c-4x-1   1/1     Running   0          13s   10.233.119.5    cubestack-k8s-worker02   <none>           <none>
+b2c-4x-2   1/1     Running   0          13s   10.233.119.38   cubestack-k8s-worker02   <none>           <none>
+b2c-4x-3   1/1     Running   0          13s   10.233.119.2    cubestack-k8s-worker02   <none>           <none>
+--- placement ---
+--- results ---
+--- b2c-4x-0
+device MetaX C550
+{"n": 2048, "seconds": 60.002, "iters": 54272, "iter_per_sec": 904.51, "tflops": 15.54}
+--- b2c-4x-1
+device MetaX C550
+{"n": 2048, "seconds": 60.0, "iters": 47922, "iter_per_sec": 798.7, "tflops": 13.72}
+--- b2c-4x-2
+device MetaX C550
+{"n": 2048, "seconds": 60.0, "iters": 46958, "iter_per_sec": 782.63, "tflops": 13.45}
+--- b2c-4x-3
+device MetaX C550
+{"n": 2048, "seconds": 60.0, "iters": 53593, "iter_per_sec": 893.21, "tflops": 15.35}
+pod "b2c-4x-0" deleted from hami-demo namespace
+pod "b2c-4x-1" deleted from hami-demo namespace
+pod "b2c-4x-2" deleted from hami-demo namespace
+pod "b2c-4x-3" deleted from hami-demo namespace

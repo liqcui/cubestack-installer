@@ -1,0 +1,1945 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "4d66030694ec93770b7736f2e08783b9e560a847fee4cbf39a56a8c49e6ef08d",
+                    "cni.projectcalico.org/podIP": "10.233.105.229/32",
+                    "cni.projectcalico.org/podIPs": "10.233.105.229/32",
+                    "hami.io/bind-phase": "allocating",
+                    "hami.io/bind-time": "1795472448",
+                    "hami.io/metax-sgpu-devices-allocated": "GPU-e3980126-5b13-7fc1-7d68-cbda75ed398b,Metax-SGPU,8192,25:;",
+                    "hami.io/metax-sgpu-devices-to-allocate": "GPU-e3980126-5b13-7fc1-7d68-cbda75ed398b,Metax-SGPU,8192,25:;",
+                    "hami.io/node-scheduler-policy": "spread",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker01",
+                    "hami.io/vgpu-time": "1795472448",
+                    "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.105.229\"\n    ],\n    \"mac\": \"32:b5:59:25:c5:20\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{\"hami.io/node-scheduler-policy\":\"spread\",\"metax-tech.com/sgpu-topology-aware\":\"true\"},\"labels\":{\"exp\":\"b3s\",\"grp\":\"a\"},\"name\":\"b3s-a-0\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"c\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":25,\"metax-tech.com/vmemory\":8}}}]}}\n",
+                    "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"c\",\"sgpus\":[{\"uuid\":\"GPU-434fb8e3-5fec-7f33-9de9-087d5954398d\",\"bdf\":\"0000:e4:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+                    "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-e3980126-5b13-7fc1-7d68-cbda75ed398b\",\"compute\":25,\"vRam\":8192}]]",
+                    "metax-tech.com/predicate-time": "1795472448965855011",
+                    "metax-tech.com/sgpu-qos-policy": "best-effort",
+                    "metax-tech.com/sgpu-topology-aware": "true"
+                },
+                "creationTimestamp": "2026-11-23T22:20:48Z",
+                "generation": 1,
+                "labels": {
+                    "exp": "b3s",
+                    "grp": "a",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker01"
+                },
+                "name": "b3s-a-0",
+                "namespace": "hami-demo",
+                "resourceVersion": "470503",
+                "uid": "9e8dd50d-f183-4020-a08d-fae1b04a37f8"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "sh",
+                            "-c",
+                            "sleep 3600"
+                        ],
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "c",
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-n6984",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "cubestack-k8s-worker01",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "hami-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-n6984",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:52Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:50Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:52Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:52Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:50Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "metax-tech.com/sgpu": "1",
+                            "metax-tech.com/vcore": "25",
+                            "metax-tech.com/vmemory": "8"
+                        },
+                        "containerID": "containerd://8ed470d4b1121cdd566ae891988c9a461c45b6170da4f8f6b5e85e606d05393b",
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imageID": "registry.cubestack.io:5000/metax/maca@sha256:c4ebcc7c1d15d0b810050cd342f07b6fb82f1f59bcb616bb519aff5e6d3837df",
+                        "lastState": {},
+                        "name": "c",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-23T22:20:51Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-n6984",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "10.66.3.39",
+                "hostIPs": [
+                    {
+                        "ip": "10.66.3.39"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "10.233.105.229",
+                "podIPs": [
+                    {
+                        "ip": "10.233.105.229"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-11-23T22:20:50Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "65eda1ec72c337118502be910440e2e6d851a47871661331025007a40f26cb8b",
+                    "cni.projectcalico.org/podIP": "10.233.119.54/32",
+                    "cni.projectcalico.org/podIPs": "10.233.119.54/32",
+                    "hami.io/bind-phase": "allocating",
+                    "hami.io/bind-time": "1795472448",
+                    "hami.io/metax-sgpu-devices-allocated": "GPU-43110603-2a5b-1de0-9d7b-ba5dae750f20,Metax-SGPU,8192,25:;",
+                    "hami.io/metax-sgpu-devices-to-allocate": "GPU-43110603-2a5b-1de0-9d7b-ba5dae750f20,Metax-SGPU,8192,25:;",
+                    "hami.io/node-scheduler-policy": "spread",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker02",
+                    "hami.io/vgpu-time": "1795472448",
+                    "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.119.54\"\n    ],\n    \"mac\": \"3e:98:b1:79:77:25\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{\"hami.io/node-scheduler-policy\":\"spread\",\"metax-tech.com/sgpu-topology-aware\":\"true\"},\"labels\":{\"exp\":\"b3s\",\"grp\":\"a\"},\"name\":\"b3s-a-1\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"c\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":25,\"metax-tech.com/vmemory\":8}}}]}}\n",
+                    "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"c\",\"sgpus\":[{\"uuid\":\"GPU-0a16fe91-29a9-4a95-ce0a-72fbf3730ed7\",\"bdf\":\"0000:e4:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+                    "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-43110603-2a5b-1de0-9d7b-ba5dae750f20\",\"compute\":25,\"vRam\":8192}]]",
+                    "metax-tech.com/predicate-time": "1795472448982400839",
+                    "metax-tech.com/sgpu-qos-policy": "best-effort",
+                    "metax-tech.com/sgpu-topology-aware": "true"
+                },
+                "creationTimestamp": "2026-11-23T22:20:48Z",
+                "generation": 1,
+                "labels": {
+                    "exp": "b3s",
+                    "grp": "a",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker02"
+                },
+                "name": "b3s-a-1",
+                "namespace": "hami-demo",
+                "resourceVersion": "470544",
+                "uid": "aa8bb842-2d5a-47d0-b736-c28bed5bfa00"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "sh",
+                            "-c",
+                            "sleep 3600"
+                        ],
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "c",
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-q4cgl",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "cubestack-k8s-worker02",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "hami-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-q4cgl",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:55Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:53Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:55Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:55Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:53Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "metax-tech.com/sgpu": "1",
+                            "metax-tech.com/vcore": "25",
+                            "metax-tech.com/vmemory": "8"
+                        },
+                        "containerID": "containerd://9461bf65032888ecd37426b3a0b43a0b5513b25fa2bc9fc934a1d3ad97bfef31",
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imageID": "registry.cubestack.io:5000/metax/maca@sha256:c4ebcc7c1d15d0b810050cd342f07b6fb82f1f59bcb616bb519aff5e6d3837df",
+                        "lastState": {},
+                        "name": "c",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-23T22:20:54Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-q4cgl",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "10.66.3.40",
+                "hostIPs": [
+                    {
+                        "ip": "10.66.3.40"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "10.233.119.54",
+                "podIPs": [
+                    {
+                        "ip": "10.233.119.54"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-11-23T22:20:53Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "84f78591f3f2772f9f19d4aae63ec1f32cd19964f4f4ff4349bd664e41331910",
+                    "cni.projectcalico.org/podIP": "10.233.119.29/32",
+                    "cni.projectcalico.org/podIPs": "10.233.119.29/32",
+                    "hami.io/bind-phase": "allocating",
+                    "hami.io/bind-time": "1795472459",
+                    "hami.io/metax-sgpu-devices-allocated": "GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb,Metax-SGPU,8192,25:;",
+                    "hami.io/metax-sgpu-devices-to-allocate": "GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb,Metax-SGPU,8192,25:;",
+                    "hami.io/node-scheduler-policy": "spread",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker02",
+                    "hami.io/vgpu-time": "1795472458",
+                    "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.119.29\"\n    ],\n    \"mac\": \"1a:5c:0a:e9:1a:1c\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{\"hami.io/node-scheduler-policy\":\"spread\",\"metax-tech.com/sgpu-topology-aware\":\"true\"},\"labels\":{\"exp\":\"b3s\",\"grp\":\"a\"},\"name\":\"b3s-a-2\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"c\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":25,\"metax-tech.com/vmemory\":8}}}]}}\n",
+                    "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"c\",\"sgpus\":[{\"uuid\":\"GPU-36ecbbc8-7a9d-797c-6a54-5518de8f8364\",\"bdf\":\"0000:e3:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+                    "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb\",\"compute\":25,\"vRam\":8192}]]",
+                    "metax-tech.com/predicate-time": "1795472458980758917",
+                    "metax-tech.com/sgpu-qos-policy": "best-effort",
+                    "metax-tech.com/sgpu-topology-aware": "true"
+                },
+                "creationTimestamp": "2026-11-23T22:20:48Z",
+                "generation": 1,
+                "labels": {
+                    "exp": "b3s",
+                    "grp": "a",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker02"
+                },
+                "name": "b3s-a-2",
+                "namespace": "hami-demo",
+                "resourceVersion": "470751",
+                "uid": "eff4b60a-aa6e-4325-b8d8-808da957d9b6"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "sh",
+                            "-c",
+                            "sleep 3600"
+                        ],
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "c",
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-7jkp2",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "cubestack-k8s-worker02",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "hami-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-7jkp2",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:08Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:07Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:08Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:08Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:06Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "metax-tech.com/sgpu": "1",
+                            "metax-tech.com/vcore": "25",
+                            "metax-tech.com/vmemory": "8"
+                        },
+                        "containerID": "containerd://43116306faab65707dc0d9d6797b938010eefcf8cd2c10dcef56ba0a210ddb5e",
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imageID": "registry.cubestack.io:5000/metax/maca@sha256:c4ebcc7c1d15d0b810050cd342f07b6fb82f1f59bcb616bb519aff5e6d3837df",
+                        "lastState": {},
+                        "name": "c",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-23T22:21:08Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-7jkp2",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "10.66.3.40",
+                "hostIPs": [
+                    {
+                        "ip": "10.66.3.40"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "10.233.119.29",
+                "podIPs": [
+                    {
+                        "ip": "10.233.119.29"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-11-23T22:21:07Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "522e0b86b195e0ea93af6194cb824be591135b1dc1b0448b6207921be8e2b2ff",
+                    "cni.projectcalico.org/podIP": "10.233.105.255/32",
+                    "cni.projectcalico.org/podIPs": "10.233.105.255/32",
+                    "hami.io/bind-phase": "allocating",
+                    "hami.io/bind-time": "1795472451",
+                    "hami.io/metax-sgpu-devices-allocated": "GPU-cacd9404-9913-9ae3-8eff-1c2ca3edfe7d,Metax-SGPU,8192,25:;",
+                    "hami.io/metax-sgpu-devices-to-allocate": "GPU-cacd9404-9913-9ae3-8eff-1c2ca3edfe7d,Metax-SGPU,8192,25:;",
+                    "hami.io/node-scheduler-policy": "spread",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker01",
+                    "hami.io/vgpu-time": "1795472450",
+                    "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.105.255\"\n    ],\n    \"mac\": \"3e:78:cb:28:01:c2\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{\"hami.io/node-scheduler-policy\":\"spread\",\"metax-tech.com/sgpu-topology-aware\":\"true\"},\"labels\":{\"exp\":\"b3s\",\"grp\":\"a\"},\"name\":\"b3s-a-3\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"c\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":25,\"metax-tech.com/vmemory\":8}}}]}}\n",
+                    "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"c\",\"sgpus\":[{\"uuid\":\"GPU-362f7710-866a-63f7-6a49-61b03a6efde1\",\"bdf\":\"0000:e3:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+                    "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-cacd9404-9913-9ae3-8eff-1c2ca3edfe7d\",\"compute\":25,\"vRam\":8192}]]",
+                    "metax-tech.com/predicate-time": "1795472450178274508",
+                    "metax-tech.com/sgpu-qos-policy": "best-effort",
+                    "metax-tech.com/sgpu-topology-aware": "true"
+                },
+                "creationTimestamp": "2026-11-23T22:20:49Z",
+                "generation": 1,
+                "labels": {
+                    "exp": "b3s",
+                    "grp": "a",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker01"
+                },
+                "name": "b3s-a-3",
+                "namespace": "hami-demo",
+                "resourceVersion": "470594",
+                "uid": "c4831302-367d-483e-a2ab-f6a2c4cd6f1c"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "sh",
+                            "-c",
+                            "sleep 3600"
+                        ],
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "c",
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-clnz6",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "cubestack-k8s-worker01",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "hami-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-clnz6",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:58Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:57Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:58Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:58Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:20:57Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "metax-tech.com/sgpu": "1",
+                            "metax-tech.com/vcore": "25",
+                            "metax-tech.com/vmemory": "8"
+                        },
+                        "containerID": "containerd://ad8fdc64483bcab2584ffa8a73d90d0e20b6deb0ac172452e3519da205701046",
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imageID": "registry.cubestack.io:5000/metax/maca@sha256:c4ebcc7c1d15d0b810050cd342f07b6fb82f1f59bcb616bb519aff5e6d3837df",
+                        "lastState": {},
+                        "name": "c",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-23T22:20:58Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-clnz6",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "10.66.3.39",
+                "hostIPs": [
+                    {
+                        "ip": "10.66.3.39"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "10.233.105.255",
+                "podIPs": [
+                    {
+                        "ip": "10.233.105.255"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-11-23T22:20:57Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "f6db4bd0cb5343bda3706d9fb5b6029859ef4996882984521508fb65327f2f33",
+                    "cni.projectcalico.org/podIP": "10.233.105.198/32",
+                    "cni.projectcalico.org/podIPs": "10.233.105.198/32",
+                    "hami.io/bind-phase": "allocating",
+                    "hami.io/bind-time": "1795472469",
+                    "hami.io/metax-sgpu-devices-allocated": "GPU-d55b9a7f-ef31-67f9-1775-fe39091bd103,Metax-SGPU,8192,25:;",
+                    "hami.io/metax-sgpu-devices-to-allocate": "GPU-d55b9a7f-ef31-67f9-1775-fe39091bd103,Metax-SGPU,8192,25:;",
+                    "hami.io/node-scheduler-policy": "spread",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker01",
+                    "hami.io/vgpu-time": "1795472469",
+                    "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.105.198\"\n    ],\n    \"mac\": \"62:ac:b3:87:57:23\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{\"hami.io/node-scheduler-policy\":\"spread\",\"metax-tech.com/sgpu-topology-aware\":\"true\"},\"labels\":{\"exp\":\"b3s\",\"grp\":\"a\"},\"name\":\"b3s-a-4\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"c\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":25,\"metax-tech.com/vmemory\":8}}}]}}\n",
+                    "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"c\",\"sgpus\":[{\"uuid\":\"GPU-d0ccf2b8-b635-98c0-f034-0608ea376840\",\"bdf\":\"0000:a4:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+                    "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-d55b9a7f-ef31-67f9-1775-fe39091bd103\",\"compute\":25,\"vRam\":8192}]]",
+                    "metax-tech.com/predicate-time": "1795472469005729014",
+                    "metax-tech.com/sgpu-qos-policy": "best-effort",
+                    "metax-tech.com/sgpu-topology-aware": "true"
+                },
+                "creationTimestamp": "2026-11-23T22:20:49Z",
+                "generation": 1,
+                "labels": {
+                    "exp": "b3s",
+                    "grp": "a",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker01"
+                },
+                "name": "b3s-a-4",
+                "namespace": "hami-demo",
+                "resourceVersion": "470825",
+                "uid": "31bceb45-abcb-4594-9683-ae93512d2953"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "sh",
+                            "-c",
+                            "sleep 3600"
+                        ],
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "c",
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-n5fkg",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "cubestack-k8s-worker01",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "hami-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-n5fkg",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:13Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:11Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:13Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:13Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:11Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "metax-tech.com/sgpu": "1",
+                            "metax-tech.com/vcore": "25",
+                            "metax-tech.com/vmemory": "8"
+                        },
+                        "containerID": "containerd://2e406780b7e1eb7c6c224cf042ca448bb9f6ad6d0c2b126dd8e2791ba7fefc57",
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imageID": "registry.cubestack.io:5000/metax/maca@sha256:c4ebcc7c1d15d0b810050cd342f07b6fb82f1f59bcb616bb519aff5e6d3837df",
+                        "lastState": {},
+                        "name": "c",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-23T22:21:12Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-n5fkg",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "10.66.3.39",
+                "hostIPs": [
+                    {
+                        "ip": "10.66.3.39"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "10.233.105.198",
+                "podIPs": [
+                    {
+                        "ip": "10.233.105.198"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-11-23T22:21:11Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "fda543242c1da0736136336e22f1a0f9e0c40214935a54a60ce500d685528b8e",
+                    "cni.projectcalico.org/podIP": "10.233.119.15/32",
+                    "cni.projectcalico.org/podIPs": "10.233.119.15/32",
+                    "hami.io/bind-phase": "allocating",
+                    "hami.io/bind-time": "1795472455",
+                    "hami.io/metax-sgpu-devices-allocated": "GPU-963a8bc8-9f6f-178b-8a1e-85181989c185,Metax-SGPU,8192,25:;",
+                    "hami.io/metax-sgpu-devices-to-allocate": "GPU-963a8bc8-9f6f-178b-8a1e-85181989c185,Metax-SGPU,8192,25:;",
+                    "hami.io/node-scheduler-policy": "spread",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker02",
+                    "hami.io/vgpu-time": "1795472453",
+                    "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.119.15\"\n    ],\n    \"mac\": \"f2:0d:2a:41:55:99\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{\"hami.io/node-scheduler-policy\":\"spread\",\"metax-tech.com/sgpu-topology-aware\":\"true\"},\"labels\":{\"exp\":\"b3s\",\"grp\":\"a\"},\"name\":\"b3s-a-5\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"c\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":25,\"metax-tech.com/vmemory\":8}}}]}}\n",
+                    "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"c\",\"sgpus\":[{\"uuid\":\"GPU-0e1087b3-9163-9d1a-e2b0-f10dfbfd8f7e\",\"bdf\":\"0000:a4:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+                    "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-963a8bc8-9f6f-178b-8a1e-85181989c185\",\"compute\":25,\"vRam\":8192}]]",
+                    "metax-tech.com/predicate-time": "1795472453379383416",
+                    "metax-tech.com/sgpu-qos-policy": "best-effort",
+                    "metax-tech.com/sgpu-topology-aware": "true"
+                },
+                "creationTimestamp": "2026-11-23T22:20:49Z",
+                "generation": 1,
+                "labels": {
+                    "exp": "b3s",
+                    "grp": "a",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker02"
+                },
+                "name": "b3s-a-5",
+                "namespace": "hami-demo",
+                "resourceVersion": "470677",
+                "uid": "1bdd8886-92ef-4851-9413-29c6d15fd065"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "sh",
+                            "-c",
+                            "sleep 3600"
+                        ],
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "c",
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-8t9qm",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "cubestack-k8s-worker02",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "hami-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-8t9qm",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:04Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:02Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:04Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:04Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:02Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "metax-tech.com/sgpu": "1",
+                            "metax-tech.com/vcore": "25",
+                            "metax-tech.com/vmemory": "8"
+                        },
+                        "containerID": "containerd://deef9b13d2c130becc9ddba1bb05c3c73aa09d5c458bd281dc97c8db1556749f",
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imageID": "registry.cubestack.io:5000/metax/maca@sha256:c4ebcc7c1d15d0b810050cd342f07b6fb82f1f59bcb616bb519aff5e6d3837df",
+                        "lastState": {},
+                        "name": "c",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-23T22:21:04Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-8t9qm",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "10.66.3.40",
+                "hostIPs": [
+                    {
+                        "ip": "10.66.3.40"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "10.233.119.15",
+                "podIPs": [
+                    {
+                        "ip": "10.233.119.15"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-11-23T22:21:02Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "f83f3feb3c9ff54f867405ea689be10c27163671ba09881cd97f3b07fbcf90b2",
+                    "cni.projectcalico.org/podIP": "10.233.119.21/32",
+                    "cni.projectcalico.org/podIPs": "10.233.119.21/32",
+                    "hami.io/bind-phase": "allocating",
+                    "hami.io/bind-time": "1795472468",
+                    "hami.io/metax-sgpu-devices-allocated": "GPU-a769be12-de57-a9a8-9133-b226120173b8,Metax-SGPU,8192,25:;",
+                    "hami.io/metax-sgpu-devices-to-allocate": "GPU-a769be12-de57-a9a8-9133-b226120173b8,Metax-SGPU,8192,25:;",
+                    "hami.io/node-scheduler-policy": "spread",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker02",
+                    "hami.io/vgpu-time": "1795472468",
+                    "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.119.21\"\n    ],\n    \"mac\": \"56:84:44:48:55:52\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{\"hami.io/node-scheduler-policy\":\"spread\",\"metax-tech.com/sgpu-topology-aware\":\"true\"},\"labels\":{\"exp\":\"b3s\",\"grp\":\"a\"},\"name\":\"b3s-a-6\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"c\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":25,\"metax-tech.com/vmemory\":8}}}]}}\n",
+                    "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"c\",\"sgpus\":[{\"uuid\":\"GPU-8095e5af-8a2d-583c-80d7-c7c94edf28a4\",\"bdf\":\"0000:a3:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+                    "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-a769be12-de57-a9a8-9133-b226120173b8\",\"compute\":25,\"vRam\":8192}]]",
+                    "metax-tech.com/predicate-time": "1795472468006655713",
+                    "metax-tech.com/sgpu-qos-policy": "best-effort",
+                    "metax-tech.com/sgpu-topology-aware": "true"
+                },
+                "creationTimestamp": "2026-11-23T22:20:49Z",
+                "generation": 1,
+                "labels": {
+                    "exp": "b3s",
+                    "grp": "a",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker02"
+                },
+                "name": "b3s-a-6",
+                "namespace": "hami-demo",
+                "resourceVersion": "470787",
+                "uid": "19a8bb73-9669-4ea8-9ae0-00d94b1850ea"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "sh",
+                            "-c",
+                            "sleep 3600"
+                        ],
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "c",
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-57gmj",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "cubestack-k8s-worker02",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "hami-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-57gmj",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:10Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:09Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:10Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:10Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:09Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "metax-tech.com/sgpu": "1",
+                            "metax-tech.com/vcore": "25",
+                            "metax-tech.com/vmemory": "8"
+                        },
+                        "containerID": "containerd://a1057904b25ed9bb7e83cf0ab61910ca9a82834d9c524313757552441f8aa7fc",
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imageID": "registry.cubestack.io:5000/metax/maca@sha256:c4ebcc7c1d15d0b810050cd342f07b6fb82f1f59bcb616bb519aff5e6d3837df",
+                        "lastState": {},
+                        "name": "c",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-23T22:21:10Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-57gmj",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "10.66.3.40",
+                "hostIPs": [
+                    {
+                        "ip": "10.66.3.40"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "10.233.119.21",
+                "podIPs": [
+                    {
+                        "ip": "10.233.119.21"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-11-23T22:21:09Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "920ca9491a427942a67b17b9d6ab02557bcc74a56babd2c8ebc6cdb92f201d9d",
+                    "cni.projectcalico.org/podIP": "10.233.105.202/32",
+                    "cni.projectcalico.org/podIPs": "10.233.105.202/32",
+                    "hami.io/bind-phase": "allocating",
+                    "hami.io/bind-time": "1795472458",
+                    "hami.io/metax-sgpu-devices-allocated": "GPU-fab62c42-b808-1963-5eea-1456085823fd,Metax-SGPU,8192,25:;",
+                    "hami.io/metax-sgpu-devices-to-allocate": "GPU-fab62c42-b808-1963-5eea-1456085823fd,Metax-SGPU,8192,25:;",
+                    "hami.io/node-scheduler-policy": "spread",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker01",
+                    "hami.io/vgpu-time": "1795472457",
+                    "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.105.202\"\n    ],\n    \"mac\": \"06:49:48:c3:fa:80\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{\"hami.io/node-scheduler-policy\":\"spread\",\"metax-tech.com/sgpu-topology-aware\":\"true\"},\"labels\":{\"exp\":\"b3s\",\"grp\":\"a\"},\"name\":\"b3s-a-7\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"c\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":25,\"metax-tech.com/vmemory\":8}}}]}}\n",
+                    "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"c\",\"sgpus\":[{\"uuid\":\"GPU-589b141c-f36b-5546-2835-9cc4cda5977a\",\"bdf\":\"0000:a3:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+                    "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-fab62c42-b808-1963-5eea-1456085823fd\",\"compute\":25,\"vRam\":8192}]]",
+                    "metax-tech.com/predicate-time": "1795472457178610000",
+                    "metax-tech.com/sgpu-qos-policy": "best-effort",
+                    "metax-tech.com/sgpu-topology-aware": "true"
+                },
+                "creationTimestamp": "2026-11-23T22:20:49Z",
+                "generation": 1,
+                "labels": {
+                    "exp": "b3s",
+                    "grp": "a",
+                    "hami.io/vgpu-node": "cubestack-k8s-worker01"
+                },
+                "name": "b3s-a-7",
+                "namespace": "hami-demo",
+                "resourceVersion": "470719",
+                "uid": "cbaa86f4-7144-44ac-8920-b45ce68cb35c"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "sh",
+                            "-c",
+                            "sleep 3600"
+                        ],
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "c",
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-5gjcn",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "cubestack-k8s-worker01",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "hami-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-5gjcn",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:06Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:05Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:06Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:06Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-23T22:21:05Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "metax-tech.com/sgpu": "1",
+                            "metax-tech.com/vcore": "25",
+                            "metax-tech.com/vmemory": "8"
+                        },
+                        "containerID": "containerd://e49b6d99979b28da499d7304ab7635dcc6936469c477f3c048cd7f6a5f6b806e",
+                        "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+                        "imageID": "registry.cubestack.io:5000/metax/maca@sha256:c4ebcc7c1d15d0b810050cd342f07b6fb82f1f59bcb616bb519aff5e6d3837df",
+                        "lastState": {},
+                        "name": "c",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            },
+                            "requests": {
+                                "metax-tech.com/sgpu": "1",
+                                "metax-tech.com/vcore": "25",
+                                "metax-tech.com/vmemory": "8"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-23T22:21:06Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-5gjcn",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "10.66.3.39",
+                "hostIPs": [
+                    {
+                        "ip": "10.66.3.39"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "10.233.105.202",
+                "podIPs": [
+                    {
+                        "ip": "10.233.105.202"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-11-23T22:21:05Z"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

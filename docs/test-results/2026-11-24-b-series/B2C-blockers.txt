@@ -1,0 +1,31 @@
+===== apply 7 blockers on worker02 =====
+pod/b2c-blocker-0 created
+pod/b2c-blocker-1 created
+pod/b2c-blocker-2 created
+pod/b2c-blocker-3 created
+pod/b2c-blocker-4 created
+pod/b2c-blocker-5 created
+pod/b2c-blocker-6 created
+pod/b2c-blocker-0 condition met
+pod/b2c-blocker-1 condition met
+pod/b2c-blocker-2 condition met
+pod/b2c-blocker-3 condition met
+pod/b2c-blocker-4 condition met
+pod/b2c-blocker-5 condition met
+pod/b2c-blocker-6 condition met
+NAME            READY   STATUS    RESTARTS   AGE   IP              NODE                     NOMINATED NODE   READINESS GATES
+b2c-blocker-0   1/1     Running   0          24s   10.233.119.10   cubestack-k8s-worker02   <none>           <none>
+b2c-blocker-1   1/1     Running   0          24s   10.233.119.24   cubestack-k8s-worker02   <none>           <none>
+b2c-blocker-2   1/1     Running   0          24s   10.233.119.25   cubestack-k8s-worker02   <none>           <none>
+b2c-blocker-3   1/1     Running   0          24s   10.233.119.12   cubestack-k8s-worker02   <none>           <none>
+b2c-blocker-4   1/1     Running   0          24s   10.233.119.18   cubestack-k8s-worker02   <none>           <none>
+b2c-blocker-5   1/1     Running   0          24s   10.233.119.32   cubestack-k8s-worker02   <none>           <none>
+b2c-blocker-6   1/1     Running   0          24s   10.233.119.30   cubestack-k8s-worker02   <none>           <none>
+--- blocker placement ---
+b2c-blocker-0	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-43110603-2a5b-1de0-9d7b-ba5dae750f20","bdf":"0000:e4:00.0"}],"status":"finished"}]
+b2c-blocker-1	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb","bdf":"0000:e3:00.0"}],"status":"finished"}]
+b2c-blocker-2	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-963a8bc8-9f6f-178b-8a1e-85181989c185","bdf":"0000:a4:00.0"}],"status":"finished"}]
+b2c-blocker-3	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-a769be12-de57-a9a8-9133-b226120173b8","bdf":"0000:a3:00.0"}],"status":"finished"}]
+b2c-blocker-4	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-49927f7f-3a6c-8baa-53a6-39391ed4852e","bdf":"0000:66:00.0"}],"status":"finished"}]
+b2c-blocker-5	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-15d1e8bd-e69a-3eef-573b-78ef9afe3209","bdf":"0000:63:00.0"}],"status":"finished"}]
+b2c-blocker-6	cubestack-k8s-worker02	[{"index":0,"name":"c","sgpus":[{"uuid":"GPU-0e5278f0-7e5a-5e06-e2e6-4890f2be92ba","bdf":"0000:26:00.0"}],"status":"finished"}]

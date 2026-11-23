@@ -989,6 +989,8 @@ VERIFY_HAMI_AFTER_RESTORE_RC=0
 | G2 | B1 显存 2× 超卖边界 | `vcore=400` webhook 拒绝；`sgpu=16` scheduler `8/16 NodeInsufficientDevice`；单 Pod 无法构造 2× 超卖 | ✅ 已实测（L1） |
 | G3 | B2 vcore 谱系 | 25/50/75 吞吐 47–49 TFLOPS 平台；100% 69.89 TFLOPS；非比例 | ✅ 已实测 |
 | G4 | B3 spread/binpack | A=worker02、B/C=worker01；注解被读但节点选择与名称相反 | ✅ 已实测 |
+| G5 | B2 同卡并发 | 2×25% 每 Pod 39.46 TFLOPS（总 78.92）；4×25% 每 Pod 14.52（总 58.06） | ✅ 已实测 |
+| G6 | B3 25% packing | spread 4+4 跨节点；binpack/默认 8 张不同 GPU，不做 GPU 级 packing | ✅ 已实测 |
 | T0 | 驱动 / GPU Operator | 12 个 metax Pod Running；mx-smi 见 8 卡 | ✅ 通过 |
 | T1 | vendor sgpu 模式 | `sgpu=128`/节点、`gpu=0`；CM+CR 一致 | ✅ 通过 |
 | T2 | HAMi 安装 | helm deployed；scheduler 2/2；webhook | ✅ 通过 |
@@ -1185,15 +1187,16 @@ kubectl -n metax-operator delete pod -l app=metax-gpu-device              # 【�
 - ✅ 已实测（2026-11-24）：**隔离由 vendor 驱动实现，不是 HAMi hook**——无 `LD_PRELOAD`/`libvgpu`；Pod 只透传 `/dev/sgpu000` + 对应 DRM 节点；容器内 `mx-smi` 只看到 1 张 8GiB 虚拟 GPU；10GiB 分配 OOM。HAMi 只做调度与注解。
 - ✅ 已实测（2026-11-24 B1）：单 Pod 2× 超卖在 **L1 被拦截**——`vcore>100` 被 admission webhook 拒绝；`sgpu=16` 被 scheduler 以 `8/16 NodeInsufficientDevice` 拒绝。最坏单 Pod = 1 设备 × 100% / 64GiB；未执行 128GiB 分配，节点无 L4 风险。
 - ✅ 已实测（2026-11-24 B2）：`vcore` 25/50/75 吞吐为 **47–49 TFLOPS 平台**，100% 为 69.89 TFLOPS；**不按比例分配**，25% 切片实际约拿到 68% 整卡吞吐（2.72× 配额）。
-- ⚠️ 待测（B2 并发）：同一张卡上 2×/4× 25% 切片同时跑同一 workload 的总吞吐/延迟劣化尚未测（无法稳定钉在同一张卡）。
+- ✅ 已实测（2026-11-24 B2 并发）：7 个 100% blocker 钉住单卡后，2×25% 每 Pod 39.46 TFLOPS（总 78.92，整卡 62.8%）；4×25% 每 Pod 14.52（总 58.06，整卡 69.8%）；4× 总吞吐低于 1×100%（69.89），每 Pod 降至单切片的 30.5%。
 - ✅ 已实测（2026-11-24 B3）：A（spread）全落 worker02、B/C（binpack/默认）全落 worker01；注解**确实被读取**，但节点选择与策略名**相反**（推测 topology-aware 评分压过节点策略），默认等价 binpack；待 HAMi/vendor 确认。
+- ✅ 已实测（2026-11-24 B3 25%）：spread 4+4 跨两节点/8 GPU；binpack/默认全在 worker01 但仍分散 8 张 GPU，**不做 GPU 级 packing**；同卡并发需 blocker。
 - 拓扑与官方图不同：实测 8 卡为 MetaXLink 全互联（28 对全 MX1），不是官方示例图的「2 组 × 4 卡」；写 spread/binpack 预期时按实测拓扑算。
 - ⚠️ 未合并 main：`hami` / `volcano` 均为临时验证分支；镜像登记（container-image-mirror / 版本树）后续单独做。
 - 仅验证 MetaX：HAMi `devicePlugin.enabled=false`，NVIDIA 设备插件关闭；`volcano-vgpu-device-plugin` 不适用。
-- 拓扑感知仅 `vcore=100` 生效；spread = 尽量跨 GPU/NUMA 分散，binpack = 尽量集中（受 `CardInsufficientCore` accounting 限制）。
+- 拓扑感知仅 `vcore=100` 生效；spread = 尽量跨 GPU/NUMA 分散，binpack = 节点级集中（**不保证同卡多切片**，见 B3 25% 实测）。
 - Volcano 只管 Job/Queue 生命周期；Gang / Queue / DRF 不参与 GPU Pod 调度（V6 的 PodGroupPending 是 gang 等待，非 GPU 调度）。
 - 软/硬边界：节点 `metax-tech.com/sgpu` 是切片容量，不会按 slice 递减；**`vmemory` 是 vendor 设备级硬配额**（不是记账），`vcore` 是调度配额/时间片；实际用量以 mx-smi Sliced GPU / `--show-process` 为准。
-- 本次未验证项：长时间稳定性（>1h）、同卡并发隔离强度（B2 并发组）、故障注入、升级/回滚（平台版本）等；建议后续专项补测。
+- 本次未验证项：长时间稳定性（>1h）、故障注入、升级/回滚（平台版本）、跨节点 MX1 带宽基线等；建议后续专项补测。
 
 ---
 
@@ -1539,7 +1542,41 @@ C 无注解 : 全部 worker01（与 B 一致）
 #           B → worker02 -700000 / worker01 9.84，实际选 worker01
 ```
 
-> 完整 52 个文件：`docs/test-results/2026-11-24-b-series/`（容器 c 与宿主 `/home/ubuntu/hv-test-20261124/` 同名）。本次未重启服务器。
+> 完整 85 个文件：`docs/test-results/2026-11-24-b-series/`（容器 c 与宿主 `/home/ubuntu/hv-test-20261124/` 同名）。本次未重启服务器。
+
+### 8.9 同卡并发与 25% packing 原始输出（2026-11-24 01:00–01:10）
+
+```text
+# B2C：7 个 blocker 占 worker02 的 7 张 GPU（e4/e3/a4/a3/66/63/26）
+# 剩余 GPU0 = 0000:23:00.0；2×/4× benchmark Pod 全部落到该卡
+b2c-2x-0  0000:23:00.0 index 0
+b2c-2x-1  0000:23:00.0 index 1
+b2c-4x-0  0000:23:00.0 index 0
+b2c-4x-1  0000:23:00.0 index 1
+b2c-4x-2  0000:23:00.0 index 2
+b2c-4x-3  0000:23:00.0 index 3
+
+# 2×25% 结果
+{"n":2048,"seconds":60.0,"iters":137683,"iter_per_sec":2294.71,"tflops":39.42}
+{"n":2048,"seconds":60.0,"iters":137951,"iter_per_sec":2299.18,"tflops":39.5}
+# 总 78.92 TFLOPS；GPU0 平均 62.8%
+
+# 4×25% 结果
+{"n":2048,"seconds":60.0,"iters":54272,"iter_per_sec":904.51,"tflops":15.54}
+{"n":2048,"seconds":60.0,"iters":47922,"iter_per_sec":798.7,"tflops":13.72}
+{"n":2048,"seconds":60.0,"iters":46958,"iter_per_sec":782.63,"tflops":13.45}
+{"n":2048,"seconds":60.0,"iters":53593,"iter_per_sec":893.21,"tflops":15.35}
+# 总 58.06 TFLOPS；GPU0 平均 69.8%
+```
+
+```text
+# B3S（8 Pod × vcore=25 / vmemory=8）
+A spread : worker01 4 + worker02 4（8 张不同 GPU，跨节点）
+B binpack: 全部 worker01，8 张不同 GPU（e4/e3/a4/a3/66/63/26/23）
+C 无注解 : 全部 worker01，与 B 一致
+```
+
+> 完整 85 个文件：`docs/test-results/2026-11-24-b-series/`（容器 c 与宿主 `/home/ubuntu/hv-test-20261124/` 同名）。本次未重启服务器。
 
 ## 9. 参考
 
@@ -1554,7 +1591,7 @@ C 无注解 : 全部 worker01（与 B 一致）
 | `24_verify_hami.sh` / `25_verify_volcano.sh` | 自动验证脚本（见 §2 T3 / T5） |
 | `docs/test-results/2026-11-23-hami-volcano-metax-sgpu/` | 本次实测 87 个原始日志（仓库归档） |
 | `docs/test-results/2026-11-24-hami-metax-isolation/` | 2026-11-24 隔离机制实测原始证据（33 个证据文件 + README） |
-| `docs/test-results/2026-11-24-b-series/` | 2026-11-24 B1–B3 边界实测原始证据（51 个文件 + README） |
+| `docs/test-results/2026-11-24-b-series/` | 2026-11-24 B1–B3 + 同卡并发/25% packing 原始证据（84 个证据文件 + README，共 85 文件） |
 | `/home/ubuntu/hv-test-20261123/` | 本次实测完整结果包（93 文件：日志 + 文档 + YAML 副本；另有 `iso/` 隔离证据） |
 | `/root/hv-test-20261123/`（容器 c） | 本次实测完整结果包（容器内副本；另有 `iso/`） |
 
@@ -1829,7 +1866,23 @@ kubectl -n kube-system logs deploy/hami-scheduler -c vgpu-scheduler-extender --s
 1. 25/50/75 的吞吐在 **47–49 TFLOPS 平台**，100% 才跳到 **~70 TFLOPS** → 属于“水平/地板”曲线，**vcore 25–75 不按比例分配**；25% 切片实际拿到约 68% 的整卡吞吐（2.72× 配额）。
 2. V7 的 56% GPU 利用率（25% 配额）与本组的 GPU% 不完全可比：本 benchmark 每迭代 sync，host-bound，绝对 GPU% 偏低；但四组同 workload，**相对曲线有效**。
 3. 容量规划不能按 `vcore` 线性折算；应按 25% 切片的实际吞吐（约整卡的 68%）估算。
-4. 未执行“同卡 2×/4× 25% 并发”组（无法稳定把多个切片钉在同一张卡）；列为后续专项。
+4. 容量规划不能按 `vcore` 线性折算；应按 25% 切片的实际吞吐（约整卡的 68%）估算。
+
+**同卡 2×/4× 25% 并发**（用一个 7×100% blocker 占满 worker02 的 7 张卡，只留 1 张；所有 benchmark Pod 均落到 BDF `0000:23:00.0`）：
+
+| 组 | Pod 数 | 每 Pod TFLOPS | 总 TFLOPS | 整卡 GPU0% | 相对单 25% |
+|---|---|---|---|---|---|
+| 1×25%（基线） | 1 | 47.57 | 47.57 | 34.8% | 100% |
+| 2×25% | 2 | 39.42 / 39.50（均值 39.46） | **78.92** | 62.8% | 每 Pod 83.0% |
+| 4×25% | 4 | 15.54 / 13.72 / 13.45 / 15.35（均值 14.52） | **58.06** | 69.8% | 每 Pod 30.5% |
+| 1×100%（基线） | 1 | 69.89 | 69.89 | 51.1% | — |
+
+**并发结论**：
+
+1. 2×25% 每 Pod 降到单切片的 **83%**，总吞吐 78.92 TFLOPS；
+2. 4×25% 每 Pod 降到 **30.5%**，总吞吐 58.06 TFLOPS，低于 1×100%（69.89）；物理 GPU 仍是上限；
+3. 并发下整卡利用率 62.8% / 69.8%，高于单进程的 34.8% / 51.1%，说明多进程能更好填满 GPU；2× 总吞吐高于 1×100% 与本 benchmark 单进程 host-bound 有关，**每 Pod 劣化倍数**才是稳定结论；
+4. 同卡钉住方法：7 个 100% blocker + 1 张空卡；binpack 本身不会把多个 25% 切片放到同一张卡（见 D.5.5 B3 25% 结果）。
 
 #### D.5.4 B3 spread / binpack：注解被读，但节点选择与名称相反
 
@@ -1845,7 +1898,17 @@ kubectl -n kube-system logs deploy/hami-scheduler -c vgpu-scheduler-extender --s
 
 1. 注解**确实被读取**：A 与 B/C 选择了不同节点；C = B，说明**默认等价 binpack**。
 2. 但节点选择与策略名**相反**：spread 选了已填充的 worker02，binpack 选了空的 worker01。推测 topology-aware 的 700000/-700000 评分压过了节点策略，或评分符号/权重与名称不一致；需 HAMi/vendor 确认。
-3. 8×100% 场景每 Pod 独占整卡，无法体现 GPU 级 packing；若要看 GPU 级 spread/binpack，应改用 8×25% 变体（未执行）。
+3. **25% 变体**（每卡可放多个切片，8 Pod × `vcore=25 / vmemory=8`）：
+
+| 组 | 策略来源 | 落位 | GPU 分布 |
+|---|---|---|---|
+| A | 注解 `spread` | worker01 4 + worker02 4 | **8 张不同 GPU，跨两节点** |
+| B | 注解 `binpack` | 全部 worker01 | **8 张不同 GPU（未在同卡 packing）** |
+| C | 无注解（默认） | 全部 worker01 | 与 B 一致 |
+
+   - `spread` 在 25% 场景确实跨节点/GPU 分散（4+4）；
+   - `binpack` 只做**节点级** packing（全在 worker01），**不做 GPU 级 packing**（仍分散到 8 张 GPU）；
+   - 默认与 binpack 一致；因此“同卡多切片”不能靠 binpack 自动实现，需要 blocker 钉住（见 D.5.3 并发）。
 4. V5 之前“8 Pod 注解 spread 却全落一台”的疑点，本次对照后应改写为：**注解有效但表现为节点级反向选择**，不是“注解没被读”。
 
 #### D.5.5 B4 实际耗时与风险
@@ -1853,7 +1916,7 @@ kubectl -n kube-system logs deploy/hami-scheduler -c vgpu-scheduler-extender --s
 | 项 | 计划耗时 | 实际耗时 | 风险 |
 |---|---|---|---|
 | B1 | 40–60 min | ~5 min | 无（L1 拒绝，未执行 128GiB 分配） |
-| B2 | 60–90 min | ~6 min（4×60s + 启动/采样） | 低；采样 ssh 正常 |
-| B3 | 30–40 min | ~3 min（3 组） | 低；组间已清场 |
+| B2 | 60–90 min | ~6 min 谱系 + ~4 min 同卡并发 | 低；采样 ssh 正常 |
+| B3 | 30–40 min | ~3 min 100% + ~3 min 25% 变体 | 低；组间已清场 |
 
-> 原始证据：`docs/test-results/2026-11-24-b-series/`（52 文件）与 `/home/ubuntu/hv-test-20261124/`（容器 c 同名目录）。未重启任何服务器。
+> 原始证据：`docs/test-results/2026-11-24-b-series/`（85 文件：84 证据 + README）与 `/home/ubuntu/hv-test-20261124/`（容器 c 同名目录）。未重启任何服务器。
