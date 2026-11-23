@@ -1,0 +1,4 @@
+/usr/bin/mx-smi
+/opt/maca-3.8.1/lib/libmaca_mathlib_host.so
+/opt/mxdriver/bin/mx-smi
+rc=0

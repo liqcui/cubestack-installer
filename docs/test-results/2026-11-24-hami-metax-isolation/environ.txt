@@ -1,0 +1,16 @@
+PATH=/opt/maca/bin:/opt/maca/mxgpu_llvm/bin:/opt/maca/ompi/bin:/opt/maca/ucx/bin:/opt/mxdriver/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=iso-probe
+LIBRARY_PATH=/opt/mxdriver/lib:
+LD_LIBRARY_PATH=/opt/maca/lib:/opt/maca/mxshmem/lib:/opt/maca/ompi/lib:/opt/maca/ucx/lib:/opt/mxdriver/lib:
+MACA_PATH=/opt/maca
+MACA_CLANG_PATH=/opt/maca/mxgpu_llvm/bin
+KUBERNETES_SERVICE_PORT=443
+KUBERNETES_SERVICE_PORT_HTTPS=443
+KUBERNETES_PORT=tcp://10.233.0.1:443
+KUBERNETES_PORT_443_TCP=tcp://10.233.0.1:443
+KUBERNETES_PORT_443_TCP_PROTO=tcp
+KUBERNETES_PORT_443_TCP_PORT=443
+KUBERNETES_PORT_443_TCP_ADDR=10.233.0.1
+KUBERNETES_SERVICE_HOST=10.233.0.1
+HOME=/root
+rc=0

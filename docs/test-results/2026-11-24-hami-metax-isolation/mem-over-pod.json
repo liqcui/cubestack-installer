@@ -1,0 +1,246 @@
+{
+    "apiVersion": "v1",
+    "kind": "Pod",
+    "metadata": {
+        "annotations": {
+            "cni.projectcalico.org/containerID": "e1e3e092387ef5bdfd165058b7b2debbf967c721f7bc0e15d4e4f29cbbaa147a",
+            "cni.projectcalico.org/podIP": "10.233.119.52/32",
+            "cni.projectcalico.org/podIPs": "10.233.119.52/32",
+            "hami.io/bind-phase": "allocating",
+            "hami.io/bind-time": "1795450739",
+            "hami.io/metax-sgpu-devices-allocated": "GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb,Metax-SGPU,8192,25:;",
+            "hami.io/metax-sgpu-devices-to-allocate": "GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb,Metax-SGPU,8192,25:;",
+            "hami.io/vgpu-node": "cubestack-k8s-worker02",
+            "hami.io/vgpu-time": "1795450739",
+            "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.119.52\"\n    ],\n    \"mac\": \"f2:83:44:28:1f:cc\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{},\"name\":\"iso-mem-over\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/suanova/maca-pytorch:3.8.5.2-py312-torch2.8-v2.1-SNAPSHOT-20261121-78a83fb\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"main\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":25,\"metax-tech.com/vmemory\":8}}}]}}\n",
+            "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"main\",\"sgpus\":[{\"uuid\":\"GPU-32fd6261-1fe4-ab4b-462f-366b990ce5c5\",\"bdf\":\"0000:e3:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+            "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb\",\"compute\":25,\"vRam\":8192}]]",
+            "metax-tech.com/predicate-time": "1795450739423294547",
+            "metax-tech.com/sgpu-qos-policy": "best-effort"
+        },
+        "creationTimestamp": "2026-11-23T16:18:59Z",
+        "generation": 1,
+        "labels": {
+            "hami.io/vgpu-node": "cubestack-k8s-worker02"
+        },
+        "name": "iso-mem-over",
+        "namespace": "hami-demo",
+        "resourceVersion": "283235",
+        "uid": "656ca5fb-eee6-43c6-97d0-852315124365"
+    },
+    "spec": {
+        "containers": [
+            {
+                "command": [
+                    "sh",
+                    "-c",
+                    "sleep 3600"
+                ],
+                "image": "registry.cubestack.io:5000/suanova/maca-pytorch:3.8.5.2-py312-torch2.8-v2.1-SNAPSHOT-20261121-78a83fb",
+                "imagePullPolicy": "IfNotPresent",
+                "name": "main",
+                "resources": {
+                    "limits": {
+                        "metax-tech.com/sgpu": "1",
+                        "metax-tech.com/vcore": "25",
+                        "metax-tech.com/vmemory": "8"
+                    },
+                    "requests": {
+                        "metax-tech.com/sgpu": "1",
+                        "metax-tech.com/vcore": "25",
+                        "metax-tech.com/vmemory": "8"
+                    }
+                },
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File",
+                "volumeMounts": [
+                    {
+                        "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                        "name": "kube-api-access-z7jmb",
+                        "readOnly": true
+                    }
+                ]
+            }
+        ],
+        "dnsPolicy": "ClusterFirst",
+        "enableServiceLinks": true,
+        "nodeName": "cubestack-k8s-worker02",
+        "preemptionPolicy": "PreemptLowerPriority",
+        "priority": 0,
+        "restartPolicy": "Always",
+        "schedulerName": "hami-scheduler",
+        "securityContext": {},
+        "serviceAccount": "default",
+        "serviceAccountName": "default",
+        "terminationGracePeriodSeconds": 30,
+        "tolerations": [
+            {
+                "effect": "NoExecute",
+                "key": "node.kubernetes.io/not-ready",
+                "operator": "Exists",
+                "tolerationSeconds": 300
+            },
+            {
+                "effect": "NoExecute",
+                "key": "node.kubernetes.io/unreachable",
+                "operator": "Exists",
+                "tolerationSeconds": 300
+            }
+        ],
+        "volumes": [
+            {
+                "name": "kube-api-access-z7jmb",
+                "projected": {
+                    "defaultMode": 420,
+                    "sources": [
+                        {
+                            "serviceAccountToken": {
+                                "expirationSeconds": 3607,
+                                "path": "token"
+                            }
+                        },
+                        {
+                            "configMap": {
+                                "items": [
+                                    {
+                                        "key": "ca.crt",
+                                        "path": "ca.crt"
+                                    }
+                                ],
+                                "name": "kube-root-ca.crt"
+                            }
+                        },
+                        {
+                            "downwardAPI": {
+                                "items": [
+                                    {
+                                        "fieldRef": {
+                                            "apiVersion": "v1",
+                                            "fieldPath": "metadata.namespace"
+                                        },
+                                        "path": "namespace"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastProbeTime": null,
+                "lastTransitionTime": "2026-11-23T16:19:01Z",
+                "observedGeneration": 1,
+                "status": "True",
+                "type": "PodReadyToStartContainers"
+            },
+            {
+                "lastProbeTime": null,
+                "lastTransitionTime": "2026-11-23T16:18:59Z",
+                "observedGeneration": 1,
+                "status": "True",
+                "type": "Initialized"
+            },
+            {
+                "lastProbeTime": null,
+                "lastTransitionTime": "2026-11-23T16:19:01Z",
+                "observedGeneration": 1,
+                "status": "True",
+                "type": "Ready"
+            },
+            {
+                "lastProbeTime": null,
+                "lastTransitionTime": "2026-11-23T16:19:01Z",
+                "observedGeneration": 1,
+                "status": "True",
+                "type": "ContainersReady"
+            },
+            {
+                "lastProbeTime": null,
+                "lastTransitionTime": "2026-11-23T16:18:59Z",
+                "observedGeneration": 1,
+                "status": "True",
+                "type": "PodScheduled"
+            }
+        ],
+        "containerStatuses": [
+            {
+                "allocatedResources": {
+                    "metax-tech.com/sgpu": "1",
+                    "metax-tech.com/vcore": "25",
+                    "metax-tech.com/vmemory": "8"
+                },
+                "containerID": "containerd://9826871c9cadec0ac76810b16a461cc14c168c800ae2571eba5fd12d1dc19278",
+                "image": "registry.cubestack.io:5000/suanova/maca-pytorch:3.8.5.2-py312-torch2.8-v2.1-SNAPSHOT-20261121-78a83fb",
+                "imageID": "registry.cubestack.io:5000/suanova/maca-pytorch@sha256:41c46a08470c04c3f4562860bdc4588772a401019d69d0a60672cffcdf086958",
+                "lastState": {},
+                "name": "main",
+                "ready": true,
+                "resources": {
+                    "limits": {
+                        "metax-tech.com/sgpu": "1",
+                        "metax-tech.com/vcore": "25",
+                        "metax-tech.com/vmemory": "8"
+                    },
+                    "requests": {
+                        "metax-tech.com/sgpu": "1",
+                        "metax-tech.com/vcore": "25",
+                        "metax-tech.com/vmemory": "8"
+                    }
+                },
+                "restartCount": 0,
+                "started": true,
+                "state": {
+                    "running": {
+                        "startedAt": "2026-11-23T16:19:00Z"
+                    }
+                },
+                "user": {
+                    "linux": {
+                        "gid": 1000,
+                        "supplementalGroups": [
+                            4,
+                            20,
+                            24,
+                            25,
+                            29,
+                            30,
+                            44,
+                            46,
+                            1000
+                        ],
+                        "uid": 1000
+                    }
+                },
+                "volumeMounts": [
+                    {
+                        "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                        "name": "kube-api-access-z7jmb",
+                        "readOnly": true,
+                        "recursiveReadOnly": "Disabled"
+                    }
+                ]
+            }
+        ],
+        "hostIP": "10.66.3.40",
+        "hostIPs": [
+            {
+                "ip": "10.66.3.40"
+            }
+        ],
+        "observedGeneration": 1,
+        "phase": "Running",
+        "podIP": "10.233.119.52",
+        "podIPs": [
+            {
+                "ip": "10.233.119.52"
+            }
+        ],
+        "qosClass": "BestEffort",
+        "startTime": "2026-11-23T16:18:59Z"
+    }
+}

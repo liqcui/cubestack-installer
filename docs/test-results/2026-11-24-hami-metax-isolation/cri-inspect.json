@@ -1,0 +1,652 @@
+{
+  "info": {
+    "config": {
+      "annotations": {
+        "io.kubernetes.container.hash": "f5050da7",
+        "io.kubernetes.container.restartCount": "0",
+        "io.kubernetes.container.terminationMessagePath": "/dev/termination-log",
+        "io.kubernetes.container.terminationMessagePolicy": "File",
+        "io.kubernetes.pod.terminationGracePeriod": "30"
+      },
+      "command": [
+        "sh",
+        "-c",
+        "sleep 3600"
+      ],
+      "devices": [
+        {
+          "container_path": "/dev/mxcd",
+          "host_path": "/dev/mxcd",
+          "permissions": "rw"
+        },
+        {
+          "container_path": "/dev/dri/card8",
+          "host_path": "/dev/dri/card8",
+          "permissions": "rw"
+        },
+        {
+          "container_path": "/dev/dri/renderD135",
+          "host_path": "/dev/dri/renderD135",
+          "permissions": "rw"
+        },
+        {
+          "container_path": "/dev/sgpu000",
+          "host_path": "/dev/sgpu000",
+          "permissions": "rw"
+        }
+      ],
+      "envs": [
+        {
+          "key": "METAX_SCENARIO",
+          "value": "operator"
+        },
+        {
+          "key": "MACA_PATH",
+          "value": "/opt/maca"
+        },
+        {
+          "key": "MACA_CLANG_PATH",
+          "value": "/opt/maca/mxgpu_llvm/bin"
+        },
+        {
+          "key": "MACA_INSATLL_PREFIX",
+          "value": "/var/lib/metax"
+        },
+        {
+          "key": "METAX_MXDRIVER_PREFER",
+          "value": "/usr/local/metax/mxdriver"
+        },
+        {
+          "key": "KUBERNETES_SERVICE_PORT",
+          "value": "443"
+        },
+        {
+          "key": "KUBERNETES_SERVICE_PORT_HTTPS",
+          "value": "443"
+        },
+        {
+          "key": "KUBERNETES_PORT",
+          "value": "tcp://10.233.0.1:443"
+        },
+        {
+          "key": "KUBERNETES_PORT_443_TCP",
+          "value": "tcp://10.233.0.1:443"
+        },
+        {
+          "key": "KUBERNETES_PORT_443_TCP_PROTO",
+          "value": "tcp"
+        },
+        {
+          "key": "KUBERNETES_PORT_443_TCP_PORT",
+          "value": "443"
+        },
+        {
+          "key": "KUBERNETES_PORT_443_TCP_ADDR",
+          "value": "10.233.0.1"
+        },
+        {
+          "key": "KUBERNETES_SERVICE_HOST",
+          "value": "10.233.0.1"
+        }
+      ],
+      "image": {
+        "image": "sha256:9a0eb6872c0f7893eabd744287c5edec7e3615563d2067d75738859ccc04e8ae",
+        "user_specified_image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64"
+      },
+      "labels": {
+        "io.kubernetes.container.name": "main",
+        "io.kubernetes.pod.name": "iso-probe",
+        "io.kubernetes.pod.namespace": "hami-demo",
+        "io.kubernetes.pod.uid": "4fc8cd82-0603-441e-b329-aee94286f8e2"
+      },
+      "linux": {
+        "resources": {
+          "cpu_period": 100000,
+          "cpu_shares": 2,
+          "hugepage_limits": [
+            {
+              "page_size": "2MB"
+            },
+            {
+              "page_size": "1GB"
+            }
+          ],
+          "oom_score_adj": 1000,
+          "unified": {
+            "memory.oom.group": "1",
+            "memory.swap.max": "0"
+          }
+        },
+        "security_context": {
+          "masked_paths": [
+            "/proc/asound",
+            "/proc/acpi",
+            "/proc/interrupts",
+            "/proc/kcore",
+            "/proc/keys",
+            "/proc/latency_stats",
+            "/proc/timer_list",
+            "/proc/timer_stats",
+            "/proc/sched_debug",
+            "/proc/scsi",
+            "/sys/firmware",
+            "/sys/devices/virtual/powercap"
+          ],
+          "namespace_options": {
+            "pid": 1,
+            "userns_options": {
+              "mode": 2
+            }
+          },
+          "readonly_paths": [
+            "/proc/bus",
+            "/proc/fs",
+            "/proc/irq",
+            "/proc/sys",
+            "/proc/sysrq-trigger"
+          ],
+          "run_as_user": {},
+          "seccomp": {
+            "profile_type": 1
+          }
+        }
+      },
+      "log_path": "main/0.log",
+      "metadata": {
+        "name": "main"
+      },
+      "mounts": [
+        {
+          "container_path": "/var/run/secrets/kubernetes.io/serviceaccount",
+          "host_path": "/var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/volumes/kubernetes.io~projected/kube-api-access-2hfp6",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/hosts",
+          "host_path": "/var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/etc-hosts"
+        },
+        {
+          "container_path": "/dev/termination-log",
+          "host_path": "/var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/containers/main/06e1c5f5"
+        }
+      ]
+    },
+    "pid": 941103,
+    "removing": false,
+    "runtimeOptions": {
+      "binary_name": "/var/lib/metax/tools/usr/bin/mx-container-runtime",
+      "systemd_cgroup": true
+    },
+    "runtimeSpec": {
+      "annotations": {
+        "io.kubernetes.cri.container-name": "main",
+        "io.kubernetes.cri.container-type": "container",
+        "io.kubernetes.cri.image-name": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+        "io.kubernetes.cri.sandbox-id": "7cf94d2437a74c889bddbf06a21892cda7ed424dbce8b2d036bc0ac86afcb5bb",
+        "io.kubernetes.cri.sandbox-name": "iso-probe",
+        "io.kubernetes.cri.sandbox-namespace": "hami-demo",
+        "io.kubernetes.cri.sandbox-uid": "4fc8cd82-0603-441e-b329-aee94286f8e2"
+      },
+      "linux": {
+        "cgroupsPath": "kubepods-besteffort-pod4fc8cd82_0603_441e_b329_aee94286f8e2.slice:cri-containerd:01b3c19eecfbdd68455d672143f210ff48ac27fd67857549b2c728577e14e79d",
+        "devices": [
+          {
+            "fileMode": 432,
+            "gid": 44,
+            "major": 236,
+            "minor": 0,
+            "path": "/dev/mxcd",
+            "type": "c",
+            "uid": 0
+          },
+          {
+            "fileMode": 432,
+            "gid": 44,
+            "major": 226,
+            "minor": 8,
+            "path": "/dev/dri/card8",
+            "type": "c",
+            "uid": 0
+          },
+          {
+            "fileMode": 432,
+            "gid": 44,
+            "major": 226,
+            "minor": 135,
+            "path": "/dev/dri/renderD135",
+            "type": "c",
+            "uid": 0
+          },
+          {
+            "fileMode": 384,
+            "gid": 0,
+            "major": 235,
+            "minor": 0,
+            "path": "/dev/sgpu000",
+            "type": "c",
+            "uid": 0
+          }
+        ],
+        "maskedPaths": [
+          "/proc/asound",
+          "/proc/acpi",
+          "/proc/interrupts",
+          "/proc/kcore",
+          "/proc/keys",
+          "/proc/latency_stats",
+          "/proc/timer_list",
+          "/proc/timer_stats",
+          "/proc/sched_debug",
+          "/proc/scsi",
+          "/sys/firmware",
+          "/sys/devices/virtual/powercap"
+        ],
+        "namespaces": [
+          {
+            "type": "pid"
+          },
+          {
+            "path": "/proc/941065/ns/ipc",
+            "type": "ipc"
+          },
+          {
+            "path": "/proc/941065/ns/uts",
+            "type": "uts"
+          },
+          {
+            "type": "mount"
+          },
+          {
+            "path": "/proc/941065/ns/net",
+            "type": "network"
+          },
+          {
+            "type": "cgroup"
+          }
+        ],
+        "readonlyPaths": [
+          "/proc/bus",
+          "/proc/fs",
+          "/proc/irq",
+          "/proc/sys",
+          "/proc/sysrq-trigger"
+        ],
+        "resources": {
+          "cpu": {
+            "period": 100000,
+            "shares": 2
+          },
+          "devices": [
+            {
+              "access": "rwm",
+              "allow": false
+            },
+            {
+              "access": "rw",
+              "allow": true,
+              "major": 236,
+              "minor": 0,
+              "type": "c"
+            },
+            {
+              "access": "rw",
+              "allow": true,
+              "major": 226,
+              "minor": 8,
+              "type": "c"
+            },
+            {
+              "access": "rw",
+              "allow": true,
+              "major": 226,
+              "minor": 135,
+              "type": "c"
+            },
+            {
+              "access": "rw",
+              "allow": true,
+              "major": 235,
+              "minor": 0,
+              "type": "c"
+            }
+          ],
+          "memory": {},
+          "unified": {
+            "memory.oom.group": "1",
+            "memory.swap.max": "0"
+          }
+        }
+      },
+      "mounts": [
+        {
+          "destination": "/proc",
+          "options": [
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "proc",
+          "type": "proc"
+        },
+        {
+          "destination": "/dev",
+          "options": [
+            "nosuid",
+            "strictatime",
+            "mode=755",
+            "size=65536k"
+          ],
+          "source": "tmpfs",
+          "type": "tmpfs"
+        },
+        {
+          "destination": "/dev/pts",
+          "options": [
+            "nosuid",
+            "noexec",
+            "newinstance",
+            "ptmxmode=0666",
+            "mode=0620",
+            "gid=5"
+          ],
+          "source": "devpts",
+          "type": "devpts"
+        },
+        {
+          "destination": "/dev/mqueue",
+          "options": [
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "mqueue",
+          "type": "mqueue"
+        },
+        {
+          "destination": "/sys",
+          "options": [
+            "nosuid",
+            "noexec",
+            "nodev",
+            "ro"
+          ],
+          "source": "sysfs",
+          "type": "sysfs"
+        },
+        {
+          "destination": "/sys/fs/cgroup",
+          "options": [
+            "nosuid",
+            "noexec",
+            "nodev",
+            "relatime",
+            "ro"
+          ],
+          "source": "cgroup",
+          "type": "cgroup"
+        },
+        {
+          "destination": "/etc/hosts",
+          "options": [
+            "rbind",
+            "rprivate",
+            "rw"
+          ],
+          "source": "/var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/etc-hosts",
+          "type": "bind"
+        },
+        {
+          "destination": "/dev/termination-log",
+          "options": [
+            "rbind",
+            "rprivate",
+            "rw"
+          ],
+          "source": "/var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/containers/main/06e1c5f5",
+          "type": "bind"
+        },
+        {
+          "destination": "/etc/hostname",
+          "options": [
+            "rbind",
+            "rprivate",
+            "rw"
+          ],
+          "source": "/var/lib/containerd/io.containerd.grpc.v1.cri/sandboxes/7cf94d2437a74c889bddbf06a21892cda7ed424dbce8b2d036bc0ac86afcb5bb/hostname",
+          "type": "bind"
+        },
+        {
+          "destination": "/etc/resolv.conf",
+          "options": [
+            "rbind",
+            "rprivate",
+            "rw"
+          ],
+          "source": "/var/lib/containerd/io.containerd.grpc.v1.cri/sandboxes/7cf94d2437a74c889bddbf06a21892cda7ed424dbce8b2d036bc0ac86afcb5bb/resolv.conf",
+          "type": "bind"
+        },
+        {
+          "destination": "/dev/shm",
+          "options": [
+            "rbind",
+            "rprivate",
+            "rw"
+          ],
+          "source": "/run/containerd/io.containerd.grpc.v1.cri/sandboxes/7cf94d2437a74c889bddbf06a21892cda7ed424dbce8b2d036bc0ac86afcb5bb/shm",
+          "type": "bind"
+        },
+        {
+          "destination": "/var/run/secrets/kubernetes.io/serviceaccount",
+          "options": [
+            "rbind",
+            "rprivate",
+            "ro"
+          ],
+          "source": "/var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/volumes/kubernetes.io~projected/kube-api-access-2hfp6",
+          "type": "bind"
+        }
+      ],
+      "ociVersion": "1.3.0",
+      "process": {
+        "apparmorProfile": "cri-containerd.apparmor.d",
+        "args": [
+          "sh",
+          "-c",
+          "sleep 3600"
+        ],
+        "capabilities": {
+          "bounding": [
+            "CAP_CHOWN",
+            "CAP_DAC_OVERRIDE",
+            "CAP_FSETID",
+            "CAP_FOWNER",
+            "CAP_MKNOD",
+            "CAP_NET_RAW",
+            "CAP_SETGID",
+            "CAP_SETUID",
+            "CAP_SETFCAP",
+            "CAP_SETPCAP",
+            "CAP_NET_BIND_SERVICE",
+            "CAP_SYS_CHROOT",
+            "CAP_KILL",
+            "CAP_AUDIT_WRITE"
+          ],
+          "effective": [
+            "CAP_CHOWN",
+            "CAP_DAC_OVERRIDE",
+            "CAP_FSETID",
+            "CAP_FOWNER",
+            "CAP_MKNOD",
+            "CAP_NET_RAW",
+            "CAP_SETGID",
+            "CAP_SETUID",
+            "CAP_SETFCAP",
+            "CAP_SETPCAP",
+            "CAP_NET_BIND_SERVICE",
+            "CAP_SYS_CHROOT",
+            "CAP_KILL",
+            "CAP_AUDIT_WRITE"
+          ],
+          "permitted": [
+            "CAP_CHOWN",
+            "CAP_DAC_OVERRIDE",
+            "CAP_FSETID",
+            "CAP_FOWNER",
+            "CAP_MKNOD",
+            "CAP_NET_RAW",
+            "CAP_SETGID",
+            "CAP_SETUID",
+            "CAP_SETFCAP",
+            "CAP_SETPCAP",
+            "CAP_NET_BIND_SERVICE",
+            "CAP_SYS_CHROOT",
+            "CAP_KILL",
+            "CAP_AUDIT_WRITE"
+          ]
+        },
+        "cwd": "/",
+        "env": [
+          "PATH=/opt/maca/bin:/opt/maca/mxgpu_llvm/bin:/opt/maca/ompi/bin:/opt/maca/ucx/bin:/opt/mxdriver/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "HOSTNAME=iso-probe",
+          "LIBRARY_PATH=/opt/mxdriver/lib:",
+          "LD_LIBRARY_PATH=/opt/maca/lib:/opt/maca/mxshmem/lib:/opt/maca/ompi/lib:/opt/maca/ucx/lib:/opt/mxdriver/lib:",
+          "MACA_PATH=/opt/maca",
+          "MACA_CLANG_PATH=/opt/maca/mxgpu_llvm/bin",
+          "METAX_SCENARIO=operator",
+          "MACA_PATH=/opt/maca",
+          "MACA_CLANG_PATH=/opt/maca/mxgpu_llvm/bin",
+          "MACA_INSATLL_PREFIX=/var/lib/metax",
+          "METAX_MXDRIVER_PREFER=/usr/local/metax/mxdriver",
+          "KUBERNETES_SERVICE_PORT=443",
+          "KUBERNETES_SERVICE_PORT_HTTPS=443",
+          "KUBERNETES_PORT=tcp://10.233.0.1:443",
+          "KUBERNETES_PORT_443_TCP=tcp://10.233.0.1:443",
+          "KUBERNETES_PORT_443_TCP_PROTO=tcp",
+          "KUBERNETES_PORT_443_TCP_PORT=443",
+          "KUBERNETES_PORT_443_TCP_ADDR=10.233.0.1",
+          "KUBERNETES_SERVICE_HOST=10.233.0.1"
+        ],
+        "oomScoreAdj": 1000,
+        "rlimits": [
+          {
+            "hard": 65535,
+            "soft": 65535,
+            "type": "RLIMIT_NOFILE"
+          }
+        ],
+        "user": {
+          "additionalGids": [
+            0
+          ],
+          "gid": 0,
+          "uid": 0
+        }
+      },
+      "root": {
+        "path": "rootfs"
+      }
+    },
+    "runtimeType": "io.containerd.runc.v2",
+    "sandboxID": "7cf94d2437a74c889bddbf06a21892cda7ed424dbce8b2d036bc0ac86afcb5bb",
+    "snapshotKey": "01b3c19eecfbdd68455d672143f210ff48ac27fd67857549b2c728577e14e79d",
+    "snapshotter": "overlayfs"
+  },
+  "status": {
+    "annotations": {
+      "io.kubernetes.container.hash": "f5050da7",
+      "io.kubernetes.container.restartCount": "0",
+      "io.kubernetes.container.terminationMessagePath": "/dev/termination-log",
+      "io.kubernetes.container.terminationMessagePolicy": "File",
+      "io.kubernetes.pod.terminationGracePeriod": "30"
+    },
+    "createdAt": "2026-11-24T00:17:56.681939422+08:00",
+    "exitCode": 0,
+    "finishedAt": "0001-01-01T00:00:00Z",
+    "id": "01b3c19eecfbdd68455d672143f210ff48ac27fd67857549b2c728577e14e79d",
+    "image": {
+      "annotations": {},
+      "image": "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64",
+      "runtimeHandler": "",
+      "userSpecifiedImage": ""
+    },
+    "imageId": "sha256:9a0eb6872c0f7893eabd744287c5edec7e3615563d2067d75738859ccc04e8ae",
+    "imageRef": "registry.cubestack.io:5000/metax/maca@sha256:c4ebcc7c1d15d0b810050cd342f07b6fb82f1f59bcb616bb519aff5e6d3837df",
+    "labels": {
+      "io.kubernetes.container.name": "main",
+      "io.kubernetes.pod.name": "iso-probe",
+      "io.kubernetes.pod.namespace": "hami-demo",
+      "io.kubernetes.pod.uid": "4fc8cd82-0603-441e-b329-aee94286f8e2"
+    },
+    "logPath": "/var/log/pods/hami-demo_iso-probe_4fc8cd82-0603-441e-b329-aee94286f8e2/main/0.log",
+    "message": "",
+    "metadata": {
+      "attempt": 0,
+      "name": "main"
+    },
+    "mounts": [
+      {
+        "containerPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+        "gidMappings": [],
+        "hostPath": "/var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/volumes/kubernetes.io~projected/kube-api-access-2hfp6",
+        "imageSubPath": "",
+        "propagation": "PROPAGATION_PRIVATE",
+        "readonly": true,
+        "recursiveReadOnly": false,
+        "selinuxRelabel": false,
+        "uidMappings": []
+      },
+      {
+        "containerPath": "/etc/hosts",
+        "gidMappings": [],
+        "hostPath": "/var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/etc-hosts",
+        "imageSubPath": "",
+        "propagation": "PROPAGATION_PRIVATE",
+        "readonly": false,
+        "recursiveReadOnly": false,
+        "selinuxRelabel": false,
+        "uidMappings": []
+      },
+      {
+        "containerPath": "/dev/termination-log",
+        "gidMappings": [],
+        "hostPath": "/var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/containers/main/06e1c5f5",
+        "imageSubPath": "",
+        "propagation": "PROPAGATION_PRIVATE",
+        "readonly": false,
+        "recursiveReadOnly": false,
+        "selinuxRelabel": false,
+        "uidMappings": []
+      }
+    ],
+    "reason": "",
+    "resources": {
+      "linux": {
+        "cpuPeriod": "100000",
+        "cpuQuota": "0",
+        "cpuShares": "2",
+        "cpusetCpus": "",
+        "cpusetMems": "",
+        "hugepageLimits": [],
+        "memoryLimitInBytes": "0",
+        "memorySwapLimitInBytes": "0",
+        "oomScoreAdj": "1000",
+        "unified": {
+          "memory.oom.group": "1",
+          "memory.swap.max": "0"
+        }
+      }
+    },
+    "startedAt": "2026-11-24T00:17:56.855611039+08:00",
+    "state": "CONTAINER_RUNNING",
+    "stopSignal": "SIGTERM",
+    "user": {
+      "linux": {
+        "gid": "0",
+        "supplementalGroups": [
+          "0"
+        ],
+        "uid": "0"
+      }
+    }
+  }
+}

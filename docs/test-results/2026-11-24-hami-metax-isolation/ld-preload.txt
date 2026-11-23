@@ -1,0 +1,3 @@
+cat: /etc/ld.so.preload: No such file or directory
+command terminated with exit code 1
+rc=1

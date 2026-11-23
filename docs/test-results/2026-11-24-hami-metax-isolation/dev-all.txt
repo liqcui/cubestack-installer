@@ -1,0 +1,23 @@
+total 4
+drwxr-xr-x 6 root root     420 Nov 23 16:17 .
+drwxr-xr-x 1 root root    4096 Nov 23 16:17 ..
+lrwxrwxrwx 1 root root      11 Nov 23 16:17 core -> /proc/kcore
+drwxr-xr-x 2 root root      80 Nov 23 16:17 dri
+lrwxrwxrwx 1 root root      13 Nov 23 16:17 fd -> /proc/self/fd
+crw-rw-rw- 1 root root    1, 7 Nov 23 16:17 full
+drwxrwxrwt 2 root root      40 Nov 23 16:17 mqueue
+crw-rw---- 1 root video 236, 0 Nov 23 16:17 mxcd
+crw-rw-rw- 1 root root    1, 3 Nov 23 16:17 null
+lrwxrwxrwx 1 root root       8 Nov 23 16:17 ptmx -> pts/ptmx
+drwxr-xr-x 2 root root       0 Nov 23 16:17 pts
+crw-rw-rw- 1 root root    1, 8 Nov 23 16:17 random
+crw------- 1 root root  235, 0 Nov 23 16:17 sgpu000
+drwxrwxrwt 2 root root      40 Nov 23 16:17 shm
+lrwxrwxrwx 1 root root      15 Nov 23 16:17 stderr -> /proc/self/fd/2
+lrwxrwxrwx 1 root root      15 Nov 23 16:17 stdin -> /proc/self/fd/0
+lrwxrwxrwx 1 root root      15 Nov 23 16:17 stdout -> /proc/self/fd/1
+-rw-rw-rw- 1 root root       0 Nov 23 16:17 termination-log
+crw-rw-rw- 1 root root    5, 0 Nov 23 16:17 tty
+crw-rw-rw- 1 root root    1, 9 Nov 23 16:17 urandom
+crw-rw-rw- 1 root root    1, 5 Nov 23 16:17 zero
+rc=0

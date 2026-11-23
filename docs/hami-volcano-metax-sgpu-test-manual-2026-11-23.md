@@ -3,7 +3,7 @@
 > 依据：`liqcui/cubestack-installer@volcano` → `docs/hami.md`、`docs/volcano.md`、`docs/*demo*.yaml`（文档日期 2026-11-23）
 > 用途：把两份部署指南落成一份可执行的实测记录。**本版已用 2026-11-23 23:06–23:25 在容器 `cubestack-install-c` 的真实执行结果回填全部待补项**；原手册 §1.1 的 22:17 原始拓扑数据原样保留。
 > 执行环境：容器 `cubestack-install-c`（镜像 `sha-baa5dc3`），仓库 `/opt/cubestack-installer`，release `2.1-SNAPSHOT-20261121-78a83fb`；集群 5 节点，worker01/02 各 8× MetaX C550。
-> 原始日志：容器 `/root/hv-test-20261123/`，宿主 `/home/ubuntu/hv-test-20261123/`（93 个文件，约 520 KB）；其中 87 个日志已归档到仓库 `docs/test-results/2026-11-23-hami-volcano-metax-sgpu/`。
+> 原始日志：容器 `/root/hv-test-20261123/`，宿主 `/home/ubuntu/hv-test-20261123/`（93 个文件，约 520 KB）；其中 87 个日志已归档到仓库 `docs/test-results/2026-11-23-hami-volcano-metax-sgpu/`。2026-11-24 隔离机制实测证据归档在 `docs/test-results/2026-11-24-hami-metax-isolation/`。
 
 约定：
 - ✅ = 本次实测通过；❌ = 本次实测失败；⚠️ = 待办 / 风险 / 需 vendor 确认项。
@@ -249,6 +249,40 @@ allocatable: cubestack-k8s-worker01 sgpu=128 / cubestack-k8s-worker02 sgpu=128�
 2. `vcore=100` 的请求走 **native 整卡分配**（vendor 日志 `config native gpu ...`、`model:native`），不会产生 Sliced 行；`vcore<100` 才创建 sGPU 切片。这解释了为什么“8 卡拓扑 Pod 铺满”时 mx-smi 仍可能没有 Sliced 行。
 3. 可调度容量看节点 `allocatable` 与 vendor `node-gpu-devices` 注解，不看 mx-smi 的“当前实例数”：`totalDevCount=16`/卡 × 8 = **128/节点**；mx-smi Sliced 表只是当前已创建的切片列表（0–16 行均属正常）。
 4. `shareNums: 4` 与 `totalDevCount=16` 的换算关系仍未由 vendor 文档确认，记为 ⚠️ 待办；但“128 = 8×16”已有节点注解直接证据。
+
+### 1.4 隔离由谁实现：vendor 设备节点 + 驱动配额（2026-11-24 00:18 实测）
+
+**动机**：NVIDIA 路径上，HAMi 通过挂载 `libvgpu.so` + `/etc/ld.so.preload` 接管 CUDA/NVML 调用，因此常说 `vcore` 是“比例、软隔离”。MetaX 路径是否同样成立，此前只有 vcore/vmemory 注解作为间接证据。本次用两个 25% / 8GiB 的 Pod 直接验证。
+
+**探针**：
+
+- `iso-probe`：`sgpu=1 / vcore=25 / vmemory=8`，镜像 `metax/maca:3.8.1.2-ubuntu22.04-amd64`，`sleep 3600`。
+- `iso-mem-over`：同配额，镜像 `suanova/maca-pytorch:...-78a83fb`，在容器内用 torch 尝试分配 **10 GiB**（超过 8 GiB 配额）。
+
+**观测结果**：
+
+| 检查项 | 命令 | 实测结果 |
+|---|---|---|
+| preload hook | `cat /etc/ld.so.preload` | **文件不存在**（rc=1） |
+| libvgpu | `find / -maxdepth 5 -iname '*vgpu*'` | **0 个** |
+| 环境变量 | `cat /proc/1/environ` | 无 `LD_PRELOAD`、无 `MX_VISIBLE_DEVICES`、无 `CUDA_VISIBLE_DEVICES` |
+| Pod spec | `kubectl get pod -o json` | `env=null`；`volumeMounts` 仅 serviceaccount；HAMi 未注入任何 hook/volume |
+| CRI devices | `crictl inspect <cid>` | 仅 `/dev/mxcd`、`/dev/dri/card8`、`/dev/dri/renderD135`、`/dev/sgpu000` |
+| 容器内 mx-smi | `kubectl exec ... mx-smi` | `Attached GPUs: 1`；Sliced 行 `000 0 0 25% 0/8192 MiB` |
+| 容器内显存容量 | torch | `GPU 0 has a total capacity of 7.59 GiB`（不是物理 64 GiB） |
+| 超配额分配 | torch 10 GiB | **`torch.OutOfMemoryError`**（Tried to allocate 10.00 GiB / total capacity 7.59 GiB） |
+| vendor 日志 | device plugin | `created sgpu [sched_quota=25;vram_quota=8192;alias=k8s:iso-probe:main;...] on 0000:e4:00.0#0` |
+| 宿主 sysfs | worker02 | `/sys/bus/pci/devices/0000:e4:00.0/sgpu/sgpu0`；同目录有 `sched_timeslice`、`sched_class` |
+
+**结论（重要修正）**：
+
+1. **MetaX 路径没有 HAMi 的 LD_PRELOAD/libvgpu hook**。隔离由 **vendor device plugin + 驱动**实现：每个 Pod 只拿到自己的 sGPU 设备节点（`/dev/sgpu000` + 对应 DRM 节点），驱动向容器暴露一个 8 GiB 的虚拟 GPU。
+2. **`vmemory` 是设备级硬配额，不只是记账**：容器内 GPU 容量被限制为 7.59 GiB，10 GiB 分配直接 OOM。
+3. **`vcore` 以 `sched_quota=25` + `sched_timeslice` 实现**；算力隔离强度（并发延迟、利用率上限）尚未量化，列入 D 组多租户专项。
+4. **HAMi 在 MetaX 上只做调度与注解**（kube-scheduler + extender + admission webhook），不做运行时拦截；NVIDIA 路径的“软隔离”因果链不能直接套用到沐曦。
+5. 对多租户的含义：**显存隔离可认为强**（硬配额）；算力隔离是 vendor 的调度配额/时间片，需 D 组实测后才能给结论。
+
+> 原始证据：`/home/ubuntu/hv-test-20261123/iso/`（容器 c 同名目录），关键文件 `ld-preload.txt`、`dev-list.txt`、`environ.txt`、`mx-smi-in-container.txt`、`cri-inspect.json`、`mem-over-run2.txt`、`device-plugin-iso-log.txt`、`sysfs-sgpu-worker02.txt`。
 
 ---
 
@@ -951,6 +985,7 @@ VERIFY_HAMI_AFTER_RESTORE_RC=0
 | 编号 | 实测项 | 关键判定 | 结论 |
 |---|---|---|---|
 | G0 | 实机 GPU 拓扑（§1.2 原始 + §1.3 复核） | 4 个 NUMA 域 × 2 卡；8 卡 28 对全 MX1；`totalDevCount=16`/卡；sGPU-M 语义已修正 | ✅ 已实测 |
+| G1 | 隔离实现（§1.4） | 无 LD_PRELOAD/libvgpu；仅透传 `/dev/sgpu000`；容器内 1 卡 / 7.59GiB；10GiB 分配 OOM | ✅ 已实测 |
 | T0 | 驱动 / GPU Operator | 12 个 metax Pod Running；mx-smi 见 8 卡 | ✅ 通过 |
 | T1 | vendor sgpu 模式 | `sgpu=128`/节点、`gpu=0`；CM+CR 一致 | ✅ 通过 |
 | T2 | HAMi 安装 | helm deployed；scheduler 2/2；webhook | ✅ 通过 |
@@ -1144,13 +1179,15 @@ kubectl -n metax-operator delete pod -l app=metax-gpu-device              # 【�
 - ✅ 已修正：`sGPU-M: Disabled` 不是“单卡关闭”；25% Pod 可落到曾 Disabled 的 GPU7（V6 实证）。
 - ⚠️ 待确认：`shareNums: 4` 与 `totalDevCount=16` 的 vendor 语义映射；当前只确认 128 = 8×16，尚不清楚 `shareNums` 控制的具体切片维度。
 - ⚠️ 待确认（本次新增）：native 整卡分配（`vcore=100`）会把该卡 `model` 置为 `native`，且不产生 Sliced 行；切回 sGPU 由 vendor 在后续 25% 分配时按需激活。该行为建议向 vendor 确认是否为设计预期。
+- ✅ 已实测（2026-11-24）：**隔离由 vendor 驱动实现，不是 HAMi hook**——无 `LD_PRELOAD`/`libvgpu`；Pod 只透传 `/dev/sgpu000` + 对应 DRM 节点；容器内 `mx-smi` 只看到 1 张 8GiB 虚拟 GPU；10GiB 分配 OOM。HAMi 只做调度与注解。
+- ⚠️ 待测（D 组）：`vcore` 的**算力**隔离强度（同卡两切片并发时的延迟劣化、利用率上限）尚无数字；目前只确认 vendor 以 `sched_quota=25` + `sched_timeslice` 实现。
 - 拓扑与官方图不同：实测 8 卡为 MetaXLink 全互联（28 对全 MX1），不是官方示例图的「2 组 × 4 卡」；写 spread/binpack 预期时按实测拓扑算。
 - ⚠️ 未合并 main：`hami` / `volcano` 均为临时验证分支；镜像登记（container-image-mirror / 版本树）后续单独做。
 - 仅验证 MetaX：HAMi `devicePlugin.enabled=false`，NVIDIA 设备插件关闭；`volcano-vgpu-device-plugin` 不适用。
 - 拓扑感知仅 `vcore=100` 生效；spread = 尽量跨 GPU/NUMA 分散，binpack = 尽量集中（受 `CardInsufficientCore` accounting 限制）。
 - Volcano 只管 Job/Queue 生命周期；Gang / Queue / DRF 不参与 GPU Pod 调度（V6 的 PodGroupPending 是 gang 等待，非 GPU 调度）。
-- 软/硬边界：节点 `metax-tech.com/sgpu` 是切片容量，不会按 slice 递减；实际用量以 mx-smi Sliced GPU / `--show-process` 为准。
-- 本次未验证项：长时间稳定性（>1h）、多租户隔离强度、故障注入、升级/回滚（平台版本）等；建议后续专项补测。
+- 软/硬边界：节点 `metax-tech.com/sgpu` 是切片容量，不会按 slice 递减；**`vmemory` 是 vendor 设备级硬配额**（不是记账），`vcore` 是调度配额/时间片；实际用量以 mx-smi Sliced GPU / `--show-process` 为准。
+- 本次未验证项：长时间稳定性（>1h）、算力隔离强度（D 组）、故障注入、升级/回滚（平台版本）等；建议后续专项补测。
 
 ---
 
@@ -1400,6 +1437,71 @@ verify_hami RC=0
 
 ---
 
+### 8.7 隔离机制实测原始输出（2026-11-24 00:18）
+
+```text
+# cat /etc/ld.so.preload
+cat: /etc/ld.so.preload: No such file or directory
+（rc=1）
+
+# ls -l /proc/1/root/dev/
+crw-rw---- 1 root video 236, 0  mxcd
+crw------- 1 root root  235, 0  sgpu000
+drwxr-xr-x 2 root root         dri
+（其余为标准 /dev 节点；无 mxcd0..7，无 8 张整卡）
+```
+
+```text
+# cat /proc/1/environ | tr '\0' '\n'（节选）
+PATH=/opt/maca/bin:...
+LD_LIBRARY_PATH=/opt/maca/lib:...
+MACA_PATH=/opt/maca
+（无 LD_PRELOAD / MX_VISIBLE_DEVICES / CUDA_VISIBLE_DEVICES）
+```
+
+```text
+# 容器内 mx-smi
+Attached GPUs : 1
+| 000      0      0          25%     | 0/8192 MiB          | 0%                   |
+```
+
+```json
+// crictl inspect <cid> → info.runtimeSpec.linux.devices
+[
+  {"path":"/dev/mxcd","major":236,"minor":0,"type":"c"},
+  {"path":"/dev/dri/card8","major":226,"minor":8,"type":"c"},
+  {"path":"/dev/dri/renderD135","major":226,"minor":135,"type":"c"},
+  {"path":"/dev/sgpu000","major":235,"minor":0,"type":"c"}
+]
+```
+
+```text
+# vendor device plugin 日志（worker02）
+allocate devices for pod iso-probe
+created sgpu [sched_quota=25;vram_quota=8192;alias=k8s:iso-probe:main;annotations=id=GPU-d89b059f...:0;online=0] on 0000:e4:00.0#0
+allocate devices for pod iso-mem-over
+created sgpu [sched_quota=25;vram_quota=8192;alias=k8s:iso-mem-over:main;annotations=id=GPU-15d1e8bd...:14;online=0] on 0000:e3:00.0#0
+```
+
+```text
+# 宿主 sysfs（worker02）
+/sys/bus/pci/devices/0000:e4:00.0/sgpu/sgpu0
+/sys/bus/pci/devices/0000:e3:00.0/sgpu/sgpu0
+（同目录含 available_devcnt / total_devcnt / sched_timeslice / sched_class / create / remove）
+```
+
+```text
+# 容器内 torch 尝试 10 GiB（配额 8 GiB）
+cuda True
+device MetaX C550
+Traceback (most recent call last):
+  ...
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 10.00 GiB.
+GPU 0 has a total capacity of 7.59 GiB of which 7.51 GiB is free.
+```
+
+> 结论：`vmemory` 是设备级硬配额；HAMi 没有运行时 hook，隔离由 vendor device plugin/驱动完成。`vcore` 的算力隔离强度待 D 组多租户实测。
+
 ## 9. 参考
 
 | 链接 | 说明 |
@@ -1412,8 +1514,9 @@ verify_hami RC=0
 | `docs/volcano-mem-demo.yaml` | Volcano Job 真实消费 demo |
 | `24_verify_hami.sh` / `25_verify_volcano.sh` | 自动验证脚本（见 §2 T3 / T5） |
 | `docs/test-results/2026-11-23-hami-volcano-metax-sgpu/` | 本次实测 87 个原始日志（仓库归档） |
-| `/home/ubuntu/hv-test-20261123/` | 本次实测完整结果包（93 文件：日志 + 文档 + YAML 副本） |
-| `/root/hv-test-20261123/`（容器 c） | 本次实测完整结果包（容器内副本） |
+| `docs/test-results/2026-11-24-hami-metax-isolation/` | 2026-11-24 隔离机制实测原始证据（33 个证据文件 + README） |
+| `/home/ubuntu/hv-test-20261123/` | 本次实测完整结果包（93 文件：日志 + 文档 + YAML 副本；另有 `iso/` 隔离证据） |
+| `/root/hv-test-20261123/`（容器 c） | 本次实测完整结果包（容器内副本；另有 `iso/`） |
 
 本工作区配套文档：
 
@@ -1425,3 +1528,226 @@ verify_hami RC=0
 - `HAMi-Topo-assets/metax-c550-sgpu-map.{svg,png}` — §1.2 图 2：16 个 sGPU 切片映射
 
 上游官方文档：https://project-hami.io/zh/docs/category/concepts
+
+---
+
+## 附录 D 三项边界实测（B0–B4，待执行计划）
+
+> **状态：待执行。** 本附录只装三项会决定“能否上生产多租户”的边界测试：B1 显存 2× 超卖、B2 vcore 谱系、B3 spread/binpack 对照。长稳、故障注入、升级回滚、带宽基线留作专项。
+> 证据命名沿用 `B1-*` / `B2-*` / `B3-*`，与既有 V1–V8 不冲突；三项都不改代码、不重装组件。
+> **本手册章节映射**：B1 → §1.4/§7 + 新增越界阶梯表；B2 → §1.4/§7 + 新增曲线；B3 → §3 V5/V6 + §4/§6；B0 → §1.1。原计划引用的“图 6/7、f9/f10、§5.3/§6.1/§6.2”属于另一份长版文档编号，在本手册中按上述映射回填。
+
+### B0 上机前置（三项共用，约 3 分钟）
+
+上一轮 V8 留下两个会污染基线的状态：GPU4/5/7 的 `sGPU-M` 可能仍为 Enabled（粘滞），`hami-demo` 里可能有残留对象。每次 B 项前后都要存基线。
+
+```bash
+# 1) 清场（本环境 hami-demo 已在上轮 V8 清理；如存在则删）
+kubectl -n hami-demo delete vcjob,pod,deploy --all --wait=true 2>/dev/null
+kubectl get pods -A | grep -E 'hami-demo|volcano-sgpu' || echo CLEAN
+
+# 2) 确认 vendor 仍是 sgpu、两节点都是 128
+#    修正：本环境 CM 的 key 是 cluster-config（不是 config.yaml）
+kubectl -n metax-operator get cm metax-device-config \
+  -o jsonpath='{.data.cluster-config}' | grep -E 'mode|shareNums'
+kubectl get nodes -o json | jq -r '.items[] |
+  "\(.metadata.name) gpu=\(.status.allocatable["metax-tech.com/gpu"] // 0) sgpu=\(.status.allocatable["metax-tech.com/sgpu"] // 0)"'
+
+# 3) 存基线（每项前后各一份：B1-before / B1-after）
+ssh worker02 'mx-smi; mx-smi --show-memory' > B0-mx-smi-worker02-baseline.txt
+kubectl get node cubestack-k8s-worker02 \
+  -o jsonpath='{.metadata.annotations.metax-tech\.com/node-gpu-devices}' | jq . > B0-node-gpu-devices-worker02.json
+```
+
+判定：两节点 `sgpu=128 / gpu=0`，且 `mx-smi` 无 Sliced 行（或仅 Enabled 无切片），才可开始 B1。
+
+### B1 显存 2× 超卖：失败点到底在哪一层
+
+**缺什么**：16 × 8192 MiB = 128 GiB > 64 GiB 只是配额相加，没有一次真实越界。生产要回答三件事：第几个 GiB 开始失败、失败被谁拦住、会不会把节点拖死。
+
+**一个前提**：GPU 级落位本身是 spread（V5 已证 8 Pod → 8 张不同卡），靠“多 Pod 堆同一张卡”堆不满 16 切片。必须用一个 Pod 一次拿满 16 个 slot（需先确认 vendor 接受 `sgpu=16 / vcore=400 / vmemory=128` 的组合）。
+
+```yaml
+# B1-fullcard.yaml —— 单 Pod 吃满一张卡：128 GiB 配额 / 400% 算力
+apiVersion: v1
+kind: Pod
+metadata:
+  name: b1-fullcard
+  namespace: hami-demo
+spec:
+  schedulerName: hami-scheduler
+  containers:
+  - name: c
+    image: registry.cubestack.io:5000/suanova/maca-pytorch:3.8.5.2-py312-torch2.8-v2.1-SNAPSHOT-20261121-78a83fb
+    command: ["sleep", "infinity"]
+    resources:
+      limits:
+        metax-tech.com/sgpu: 16
+        metax-tech.com/vmemory: 128
+        metax-tech.com/vcore: 400
+```
+
+```bash
+kubectl apply -f B1-fullcard.yaml
+kubectl -n hami-demo get pod b1-fullcard -w                  # 到 Running
+kubectl -n hami-demo get pod b1-fullcard -o wide            # 记节点与 BDF
+kubectl -n hami-demo get pod b1-fullcard -o jsonpath='{.metadata.annotations}' | jq > B1-annotations.json
+```
+
+加压脚本（容器内，4 GiB 一步，每步停 5 s 给宿主侧采样；用 `/opt/conda/bin/python3.12`，系统 python 无 torch）：
+
+```python
+# B1-alloc.py —— 逐级 alloc 到失败，打印失败类型
+import torch, time
+bufs, total = [], 0
+for i in range(1, 41):                      # 上限 160 GiB，足够越过 128
+    try:
+        bufs.append(torch.empty(4 * 1024**3 // 4, dtype=torch.float32, device="cuda"))
+        total += 4
+        print(f"STEP {i:02d} OK total={total}GiB", flush=True)
+    except RuntimeError as e:
+        print(f"STEP {i:02d} FAIL total={total}GiB err={e}", flush=True)
+        break
+    time.sleep(5)
+```
+
+```bash
+# 宿主侧同步采样（另开终端，一路到底）
+for i in $(seq 1 40); do
+  date '+%H:%M:%S'; ssh worker02 'mx-smi --show-memory | grep -E "vis_vram|reserved"'
+  sleep 5
+done > B1-samples.txt
+
+# 失败后立刻取证
+ssh worker02 'dmesg -T | tail -80'                              > B1-dmesg.txt
+ssh worker02 'mx-smi; mx-smi --show-process'                    > B1-mx-smi-after.txt
+kubectl -n hami-demo describe pod b1-fullcard                   > B1-describe.txt
+kubectl -n hami-demo get pod b1-fullcard \
+  -o jsonpath='{.status.containerStatuses[0].state}' | jq .     > B1-state.json
+```
+
+四个拦截层——判定归属：
+
+| 层 | 现象 | 证据 | 生产含义 |
+|---|---|---|---|
+| L1 调度层 | Pod 一直 Pending，事件 `CardInsufficientMemory` / `NodeUnfitPod` | `B1-describe.txt`、extender 日志 | 最理想：调度期就拒绝，节点不背风险 |
+| L2 hook 层 | 容器内 `RuntimeError: out of memory`，宿主 `vis_vram` 停在 8192 附近不再涨 | `B1-alloc.py` 输出 + `B1-samples.txt` | 软隔离可信；文档需写明“vmemory 到顶由 MACA 返回 OOM” |
+| L3 驱动层 | 宿主 `vis_vram` 涨过 8192（甚至接近 65536）才失败 | `B1-samples.txt` 出现 >8192 的值 | hook 只计数不拦截，2× 超卖是真空头 |
+| L4 宿主层 | `dmesg` 出现 `Out of memory: Killed process`，节点可能 NotReady | `B1-dmesg.txt` | 多租户不可用：一个租户能把整台拖垮 |
+
+判读要点：L2 与 L3 的分界线是宿主 `vis_vram` 有没有越过 8192；L3 与 L4 的分界线是失败发生在容器内还是内核。
+
+**回填**：§1.4/§7 + 新增“越界阶梯表”（步 / 累计 GiB / 切片 used / 物理 used / 结果）；图中加“配额线 128 GiB vs 物理线 64 GiB”与实测折线的交点。
+
+### B2 vcore 谱系：把 2.24× 的单点变成曲线
+
+**缺什么**：只有 `vcore=25 → 实测 56%` 一个点，“2.24×”是一次乘法。既不能说明线性，也不能说明 50/75/100 会怎样。
+
+**先取两个锚点**：`vcore=100`（证明这套 workload 本身能吃满整卡）和空载 0%。锚点不正，后面全是噪声。
+
+```yaml
+# B2-matmul-job.yaml —— 吞吐可复现的固定负载，只改 VCORE
+apiVersion: batch/v1
+kind: Job
+metadata: {name: b2-vcVCORE, namespace: hami-demo}
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      schedulerName: hami-scheduler
+      restartPolicy: Never
+      containers:
+      - name: c
+        image: registry.cubestack.io:5000/suanova/maca-pytorch:3.8.5.2-py312-torch2.8-v2.1-SNAPSHOT-20261121-78a83fb
+        command: ["/opt/conda/bin/python3.12", "/w/bench.py", "--n", "8192", "--it", "300"]
+        resources:
+          limits:
+            metax-tech.com/sgpu: 1
+            metax-tech.com/vmemory: 8
+            metax-tech.com/vcore: VCORE
+```
+
+> 注：`/w/bench.py` 需先准备固定 matmul benchmark（或直接用 V7 的内联 matmul 命令改造）；本仓库当前没有该脚本，执行前需补齐并固定 `--n/--it`。
+
+```bash
+for v in 25 50 75 100; do
+  sed "s/VCORE/$v/" B2-matmul-job.yaml | kubectl apply -f -
+  kubectl -n hami-demo wait --for=condition=complete job/b2-vc$v --timeout=15m
+done
+
+# 采样：每组 60 s × 1 s，去掉前 10 s 预热后取均值
+for i in $(seq 1 60); do ssh worker02 'mx-smi --show-usage' | grep -E '^GPU'; sleep 1; done > B2-usage-v25.txt
+```
+
+记录表（回填时直接填）：
+
+| vcore | 配额比例 | 实测整卡 GPU% | 吞吐（iter/s 或 TFLOPS） | 相对 100% | 倍率 |
+|---|---|---|---|---|---|
+| 25 | 1/4 | 56%（已有） | 待填 | 待填 | 2.24× |
+| 50 | 1/2 | 待填 | 待填 | 待填 | 待填 |
+| 75 | 3/4 | 待填 | 待填 | 待填 | 待填 |
+| 100 | 1/1（native） | 待填（锚点） | 待填 | 100% | 1.00× |
+
+三种曲线，结论完全不同：
+
+- **水平**（25/50/75 都在 56% 附近）→ 令牌桶只做“有/无”限流，vcore 不按比例分配 → “按比例软限”要推翻；
+- **线性**（≈ 2.24 × vcore%）→ 可写“按比例软限，实测溢出约 2.2×”，2.24× 从单点变成斜率；
+- **饱和**（25→56、50→78、75→92、100→100）→ 存在“最低配额地板”，小切片天然占便宜 → 容量规划要按 25% 切片的实际占用算，而不是按 vcore 算。
+
+**再加一组并发**（这组才回答“4× 超卖”）：同一张卡上 2 个、4 个 25% 切片同时跑同一 workload，看总吞吐是否被封在 1 个整卡。若 4×25% 的总吞吐 ≈ 1×100%，说明 4× 只是账面数字、物理仍是 1×。
+
+**回填**：§1.4/§7 补曲线与并发表；新增三假设曲线 + 实测点图（原计划图 f9）。
+
+### B3 spread / binpack 对照：把疑点变成结论
+
+**缺什么**：8 个 Pod 注解写着 spread，行为却像 binpack（§3 V5），只有推断没有对照。三种可能——① 注解被拓扑分支覆盖、② 策略另有来源、③ 注解根本没被读——目前无法区分。
+
+三组，固定 8 Pod、同一镜像、同时提交，只改策略来源：
+
+```bash
+# A 组（基线，复现现状）：Pod 注解 spread
+kubectl apply -f B3-8pods-annot-spread.yaml
+
+# B 组：注解换 binpack
+sed 's/node-scheduler-policy: spread/node-scheduler-policy: binpack/' B3-8pods-annot-spread.yaml | kubectl apply -f -
+
+# C 组：删掉注解，只靠 Chart 默认
+sed '/node-scheduler-policy/d' B3-8pods-annot-spread.yaml | kubectl apply -f -
+```
+
+> 注：`B3-8pods-annot-spread.yaml` 需按 V5 的 8 Pod 模板生成（`sgpu=1 / vcore=100 / vmemory=4`，加 `exp=b3`、`grp=A/B/C` 标签）；本仓库当前没有该文件，执行前需补齐。
+
+```bash
+# 落位矩阵（这就是判定证据）
+kubectl -n hami-demo get pods -l exp=b3 -o json | jq -r '
+  .items[] | "\(.metadata.labels.grp)\t\(.metadata.name)\t\(.spec.nodeName)\t\(.metadata.annotations["metax-tech.com/gpu-allocated-status"] // "-")"' \
+  | sort > B3-placement.txt
+
+# extender 决策日志（含 policy 与打分耗时）
+kubectl -n kube-system logs deploy/hami-scheduler -c vgpu-scheduler-extender --since=15m \
+  | grep -E 'policy|NodeFitPod|score' > B3-extender.txt
+```
+
+判定表：
+
+| A（spread） | B（binpack） | C（无注解） | 结论 |
+|---|---|---|---|
+| 全落一台 | 全落一台 | 全落一台 | 注解完全没被读（拓扑分支硬编码或 bug） |
+| 全落一台 | 分开 | 全落一台 | spread 在 `sgpuTopologyAware=true` 分支被忽略，binpack 正常 → 确认 bug，可提 issue |
+| 全落一台 | 分开 | 分开 | Chart 默认就是 binpack，spread 是无效配置项 → 文档改写“节点级策略只能改 values” |
+
+顺手赚一条：`B3-extender.txt` 的时间戳能算出单次打分耗时，把“调度延迟”也一起补了，不用单独排一次实验。
+
+**回填**：§3 V5/V6 从“⚠️ 待确认”改为结论 + 判定表；§8.6 遗留第 3 项可以销掉。
+
+### B4 耗时、风险与回填映射
+
+| 项 | 上机耗时 | 主要风险 | 回填位置（本手册） |
+|---|---|---|---|
+| B1 | 40–60 min | L4 会把节点打挂；放到可重启的节点，或最后做 | §1.4 + §7 + 越界阶梯表 |
+| B2 | 60–90 min（4 组 × 2 次采样） | 采样终端要一直挂着，ssh 断了就得重跑 | §1.4 + §7 + 曲线表 |
+| B3 | 30–40 min | 三组之间必须清场，否则落位受残留 Pod 影响 | §3 V5/V6 + §4/§6 |
+
+**建议顺序 B3 → B2 → B1**：B3 最便宜且顺手拿调度延迟；B1 是唯一有“打挂节点”风险的，放最后，动手前先确认 worker 能重启。
+
+> **执行前置**：B1 前需确认 worker02 可重启（VM 控制台/`virtctl`/vmpool 任一路径），并准备回滚窗口；B2 需先补齐 `/w/bench.py`；B3 需先补齐 `B3-8pods-annot-spread.yaml`。

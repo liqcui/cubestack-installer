@@ -1,0 +1,29 @@
+2198 1974 0:187 / / rw,relatime - overlay overlay rw,lowerdir=/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/165/fs:/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/163/fs:/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/162/fs:/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/161/fs:/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/160/fs:/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/159/fs,upperdir=/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/675/fs,workdir=/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/675/work,uuid=on,nouserxattr
+2200 2198 0:230 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+2201 2198 0:231 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+2202 2201 0:232 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=5,mode=620,ptmxmode=666
+2203 2201 0:218 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw
+2204 2198 0:226 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs ro
+2205 2204 0:30 / /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime - cgroup2 cgroup rw
+2206 2198 8:3 /var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/etc-hosts /etc/hosts rw,relatime - ext4 /dev/sda3 rw,stripe=64
+2207 2201 8:3 /var/lib/kubelet/pods/4fc8cd82-0603-441e-b329-aee94286f8e2/containers/main/06e1c5f5 /dev/termination-log rw,relatime - ext4 /dev/sda3 rw,stripe=64
+2208 2198 8:3 /var/lib/containerd/io.containerd.grpc.v1.cri/sandboxes/7cf94d2437a74c889bddbf06a21892cda7ed424dbce8b2d036bc0ac86afcb5bb/hostname /etc/hostname rw,relatime - ext4 /dev/sda3 rw,stripe=64
+2209 2198 8:3 /var/lib/containerd/io.containerd.grpc.v1.cri/sandboxes/7cf94d2437a74c889bddbf06a21892cda7ed424dbce8b2d036bc0ac86afcb5bb/resolv.conf /etc/resolv.conf rw,relatime - ext4 /dev/sda3 rw,stripe=64
+2210 2201 0:174 / /dev/shm rw,relatime - tmpfs shm rw,size=65536k,inode64
+2211 2198 0:172 / /run/secrets/kubernetes.io/serviceaccount ro,relatime - tmpfs tmpfs rw,size=1579967472k,inode64,noswap
+2212 2198 8:3 /opt/mxdriver /opt/mxdriver ro,nosuid,relatime master:1 - ext4 /dev/sda3 rw,stripe=64
+1975 2200 0:230 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw
+1976 2200 0:230 /fs /proc/fs ro,nosuid,nodev,noexec,relatime - proc proc rw
+1977 2200 0:230 /irq /proc/irq ro,nosuid,nodev,noexec,relatime - proc proc rw
+1978 2200 0:230 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw
+1979 2200 0:230 /sysrq-trigger /proc/sysrq-trigger ro,nosuid,nodev,noexec,relatime - proc proc rw
+1980 2200 0:233 / /proc/acpi ro,relatime - tmpfs tmpfs ro,size=4k,nr_inodes=1,inode64
+1983 2200 0:231 /null /proc/interrupts rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+1991 2200 0:231 /null /proc/kcore rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+1992 2200 0:231 /null /proc/keys rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+1993 2200 0:231 /null /proc/latency_stats rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+1994 2200 0:231 /null /proc/timer_list rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+1995 2200 0:233 / /proc/scsi ro,relatime - tmpfs tmpfs ro,size=4k,nr_inodes=1,inode64
+1996 2204 0:233 / /sys/firmware ro,relatime - tmpfs tmpfs ro,size=4k,nr_inodes=1,inode64
+1997 2204 0:233 / /sys/devices/virtual/powercap ro,relatime - tmpfs tmpfs ro,size=4k,nr_inodes=1,inode64
+rc=0

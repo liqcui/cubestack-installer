@@ -1,0 +1,55 @@
+mx-smi  version: 2.3.4
+
+=================== MetaX System Management Interface Log ===================
+Timestamp                                         : Tue Nov 24 00:20:13 2026
+
+Attached GPUs                                     : 8
+GPU#0  MXC550  0000:23:00.0
+    Utilization
+        GPU                                       : 0 %
+        VPUE                                      : 0 %
+        VPUD                                      : 0 %
+
+GPU#1  MXC550  0000:26:00.0
+    Utilization
+        GPU                                       : 0 %
+        VPUE                                      : 0 %
+        VPUD                                      : 0 %
+
+GPU#2  MXC550  0000:63:00.0
+    Utilization
+        GPU                                       : 0 %
+        VPUE                                      : 0 %
+        VPUD                                      : 0 %
+
+GPU#3  MXC550  0000:66:00.0
+    Utilization
+        GPU                                       : 0 %
+        VPUE                                      : 0 %
+        VPUD                                      : 0 %
+
+GPU#4  MXC550  0000:a3:00.0
+    Utilization
+        GPU                                       : 0 %
+        VPUE                                      : 0 %
+        VPUD                                      : 0 %
+
+GPU#5  MXC550  0000:a4:00.0
+    Utilization
+        GPU                                       : 0 %
+        VPUE                                      : 0 %
+        VPUD                                      : 0 %
+
+GPU#6  MXC550  0000:e3:00.0
+    Utilization
+        GPU                                       : 0 %
+        VPUE                                      : 0 %
+        VPUD                                      : 0 %
+
+GPU#7  MXC550  0000:e4:00.0
+    Utilization
+        GPU                                       : 0 %
+        VPUE                                      : 0 %
+        VPUD                                      : 0 %
+
+End of Log
