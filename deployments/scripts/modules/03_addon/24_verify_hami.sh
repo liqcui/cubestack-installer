@@ -12,7 +12,8 @@
 #   · 门禁看**实际部署**(hami-scheduler Deployment 存在); 未部署且 HAMI_ENABLED≠true → 跳过。
 #   · 组件级(始终): scheduler Deployment Ready + MutatingWebhookConfiguration 存在 +
 #     device-config 含 metax-tech.com/gpu|sgpu|vcore|vmemory。
-#   · 端到端(仅当有节点声明 metax-tech.com/gpu allocatable): 创建 1 个 sGPU 共享 Pod
+#   · 端到端(仅当有节点声明 metax-tech.com/gpu 或 sgpu allocatable):
+#     创建 1 个 Pod(native 模式用 gpu=1; sGPU 模式用 sgpu=1/vcore=60/vmemory=4)
 #     (sgpu=1 / vcore=60 / vmemory=4), 断言 admission webhook 自动把 schedulerName 改成
 #     hami-scheduler 且 Pod Ready; 容器内设备节点存在为 warn(驱动版本差异, 不误判失败)。
 #   · 测试 Pod 用 HAMi 自身镜像(安装时已推入集群内置 registry), 不额外拉公网镜像。
@@ -81,37 +82,56 @@ done
 ok "    metax-tech.com/{gpu,sgpu,vcore,vmemory} 均已配置 ✓"
 
 # ---------- ④ MetaX 节点探测 ----------
+# vendor 插件有两种模式: native(advertise metax-tech.com/gpu) / sgpu(advertise metax-tech.com/sgpu)。
+# 两种都要支持: HAMi 侧 pod 资源按实际 allocatable 选择, 不能只看 gpu。
 _nodes_json="$( (SSH "${K}" get nodes -o json 2>/dev/null) || true )"
-read -r _n_nodes _n_gpus <<< "$(printf '%s' "${_nodes_json}" | python3 -c '
+read -r _n_nodes _gpu_total _sgpu_nodes _sgpu_total _gpu_nodes <<< "$(printf '%s' "${_nodes_json}" | python3 -c '
 import json, sys
 try:
     d = json.load(sys.stdin)
 except Exception:
-    print("0 0"); raise SystemExit
-nodes = gpus = 0
+    print("0 0 0 0 0"); raise SystemExit
+nodes = gpu_total = sgpu_nodes = sgpu_total = gpu_nodes = 0
 for n in d.get("items", []):
     a = (n.get("status") or {}).get("allocatable") or {}
-    try:
-        v = int(a.get("metax-tech.com/gpu") or 0)
-    except Exception:
-        v = 0
-    if v > 0:
-        nodes += 1; gpus += v
-print(nodes, gpus)
+    def num(k):
+        try: return int(a.get(k) or 0)
+        except Exception: return 0
+    gv = num("metax-tech.com/gpu"); sv = num("metax-tech.com/sgpu")
+    if gv > 0: gpu_nodes += 1; gpu_total += gv
+    if sv > 0: sgpu_nodes += 1; sgpu_total += sv
+    if gv > 0 or sv > 0: nodes += 1
+print(nodes, gpu_total, sgpu_nodes, sgpu_total, gpu_nodes)
 ' 2>/dev/null || true)"
-_n_nodes="${_n_nodes:-0}"; _n_gpus="${_n_gpus:-0}"
-case "${_n_nodes}" in ''|*[!0-9]*) _n_nodes=0 ;; esac
-case "${_n_gpus}" in ''|*[!0-9]*) _n_gpus=0 ;; esac
+for _v in _n_nodes _gpu_total _sgpu_nodes _sgpu_total _gpu_nodes; do
+    eval "_v2=\${${_v}:-0}"
+    case "${_v2}" in ''|*[!0-9]*) eval "${_v}=0" ;; *) eval "${_v}=${_v2}" ;; esac
+done
+unset _v _v2
 if [ "${_n_nodes}" -eq 0 ]; then
-    warn "  无节点声明 metax-tech.com/gpu allocatable(集群无沐曦卡, 或 MetaX device plugin 未就绪)"
+    warn "  无节点声明 metax-tech.com/gpu 或 metax-tech.com/sgpu allocatable"
+    warn "  (集群无沐曦卡, 或 MetaX device plugin 未就绪/模式未开启)"
     warn "  → 已通过组件级校验(scheduler/webhook/device-config); GPU 端到端验证跳过"
     ok "verify_hami 完成(组件级)"
     exit 0
 fi
-ok "  检测到 ${_n_nodes} 个 MetaX 节点, 共 ${_n_gpus} 张卡 ✓"
+ok "  检测到 ${_n_nodes} 个 MetaX 节点(GPU=${_gpu_total}, sGPU=${_sgpu_total}; 节点数 gpu=${_gpu_nodes}/sgpu=${_sgpu_nodes}) ✓"
 
-# ---------- ⑤ sGPU 共享 Pod 端到端 ----------
-say "  ④ 创建 sGPU 共享测试 Pod(sgpu=1 / vcore=60 / vmemory=4)..."
+# ---------- ⑤ 共享/整卡 Pod 端到端 ----------
+# 探针资源: 25% 算力/4GiB, 避免集群已有 GPU 负载时因 CardInsufficientCore 误判失败;
+# 需要更高算力/显存时用 HAMI_VERIFY_VCORE / HAMI_VERIFY_VMEMORY 覆盖。
+_vcore="${HAMI_VERIFY_VCORE:-25}"
+_vmemory="${HAMI_VERIFY_VMEMORY:-4}"
+case "${_vcore}" in ''|*[!0-9]*|0) _vcore=25 ;; esac
+case "${_vmemory}" in ''|*[!0-9]*|0) _vmemory=4 ;; esac
+if [ "${_sgpu_nodes}" -gt 0 ]; then
+    _probe_kind="sGPU"
+    _probe_desc="sgpu=1 / vcore=${_vcore} / vmemory=${_vmemory}"
+else
+    _probe_kind="GPU"
+    _probe_desc="gpu=1(native 模式)"
+fi
+say "  ④ 创建 ${_probe_kind} 测试 Pod(${_probe_desc})..."
 [ -f "${CHART_TGZ}" ] && [ -x "${HELPER}" ] \
     || { err "    缺少 vendored chart/生成器, 无法推导 HAMi 镜像"; exit 1; }
 _hami_img="$( "${HELPER}" --chart "${CHART_TGZ}" --registry "${REG_BASE}" \
@@ -128,6 +148,7 @@ cleanup() {
 trap cleanup EXIT
 
 SSH "${K}" -n default delete pod "${POD}" --ignore-not-found --wait=false >/dev/null 2>&1 || true
+if [ "${_sgpu_nodes}" -gt 0 ]; then
 SSH "${K}" apply -f - >/dev/null <<EOF
 apiVersion: v1
 kind: Pod
@@ -146,27 +167,45 @@ spec:
       resources:
         limits:
           metax-tech.com/sgpu: 1
-          metax-tech.com/vcore: 60
-          metax-tech.com/vmemory: 4
+          metax-tech.com/vcore: ${_vcore}
+          metax-tech.com/vmemory: ${_vmemory}
 EOF
+else
+SSH "${K}" apply -f - >/dev/null <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${POD}
+  namespace: default
+  labels:
+    app: cubestack-hami-verify
+spec:
+  restartPolicy: Never
+  containers:
+    - name: main
+      image: ${_hami_img}
+      imagePullPolicy: IfNotPresent
+      command: ["sh", "-c", "sleep 300"]
+      resources:
+        limits:
+          metax-tech.com/gpu: 1
+EOF
+fi
 
-_ok=0
-for _i in $(seq 1 60); do
-    _ready="$( (SSH "${K}" -n default get pod "${POD}" \
-        -o jsonpath='{range .status.conditions[?(@.type=="Ready")]}{.status}{end}' 2>/dev/null) || true )"
-    [ "${_ready}" = "True" ] && { _ok=1; break; }
-    _phase="$( (SSH "${K}" -n default get pod "${POD}" -o jsonpath='{.status.phase}' 2>/dev/null) || true )"
-    [ "${_phase}" = "Failed" ] && break
-    sleep 2
-done
-if [ "${_ok}" != "1" ]; then
+_wait="${HAMI_VERIFY_WAIT_SECONDS:-180}"
+case "${_wait}" in ''|*[!0-9]*|0) _wait=180 ;; esac
+if ! SSH "${K}" -n default wait --for=condition=Ready "pod/${POD}" --timeout="${_wait}s" >/dev/null 2>&1; then
     SSH "${K}" -n default describe pod "${POD}" 2>/dev/null | tail -40 | sed 's/^/    /' || true
     SSH "${K}" -n default get events --field-selector "involvedObject.name=${POD}" \
         --sort-by=.lastTimestamp 2>/dev/null | tail -15 | sed 's/^/    /' || true
-    err "    测试 Pod 未在 120s 内 Ready(检查 MetaX device plugin 是否 advertise sgpu/vcore/vmemory)"
+    if [ "${_sgpu_nodes}" -gt 0 ]; then
+        err "    测试 Pod 未在 ${_wait}s 内 Ready(检查 vendor plugin 是否 advertise metax-tech.com/sgpu/vcore/vmemory)"
+    else
+        err "    测试 Pod 未在 ${_wait}s 内 Ready(检查 vendor plugin 是否 advertise metax-tech.com/gpu)"
+    fi
     exit 1
 fi
-ok "    sGPU Pod Ready ✓"
+ok "    ${_probe_kind} Pod Ready ✓"
 
 _sched_used="$( (SSH "${K}" -n default get pod "${POD}" -o jsonpath='{.spec.schedulerName}' 2>/dev/null) || true )"
 [ "${_sched_used}" = "${SCHED_NAME}" ] \
@@ -179,4 +218,4 @@ else
     warn "    容器内未发现 /dev/mxcd(驱动/device plugin 版本差异; 调度与共享已通过)"
 fi
 
-ok "verify_hami 完成(组件级 + MetaX sGPU 端到端)"
+ok "verify_hami 完成(组件级 + MetaX ${_probe_kind} 端到端)"

@@ -21,6 +21,14 @@ HAMi 在本仓库中只承担 **调度层**:
 要点: 沐曦卡的设备资源必须来自**厂商 device plugin**。HAMi 侧只读 `devices.metax.*` 资源名并做调度,
 所以本模块强制 `devicePlugin.enabled=false`,不会与 MetaX Operator 抢设备。
 
+> **vendor 插件有两种模式**(决定节点 advertise 什么资源):
+> - `native`: 只 advertise `metax-tech.com/gpu`(整卡);
+> - `sgpu`: advertise `metax-tech.com/sgpu`(vGPU 切片; `vcore`/`vmemory` 由 HAMi 调度器/注解管理)。
+>
+> **vGPU 共享必须让 vendor 插件运行在 `sgpu` 模式**(见 §2.0);整卡请求用 `native` 模式。
+> 节点 allocatable 示例(sgpu 模式): `metax-tech.com/sgpu=128`(8 卡 × 16 切片),
+> `metax-tech.com/gpu=0`。
+
 ## 2. 安装(单独安装)
 
 ```bash
@@ -37,6 +45,39 @@ sudo ./deploy-cluster.sh --steps verify_hami
 部署链: 推 3 个镜像到集群内置 registry 的 `mirrors/<上游全名>` → 用 vendored chart
 `helm upgrade --install hami -n kube-system` → 等 `hami-scheduler` Ready + webhook + device-config
 → 登记组件(`cubestack-install-record`)。
+
+### 2.0 前置: 让 MetaX vendor 插件进入 sGPU 模式
+
+HAMi 的 vGPU 共享依赖 vendor device plugin advertise `metax-tech.com/sgpu`。
+默认 `metax-device-config` 是 `mode: "native"`(只有 `metax-tech.com/gpu`), 需要改成 `sgpu`:
+
+```bash
+kubectl -n metax-operator apply -f - <<'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metax-device-config
+  namespace: metax-operator
+data:
+  cluster-config: |
+    mode: "sgpu"
+    sgpuHybrid: null
+    shareNums: 4
+    deviceAllocationStrategy: "native"
+  version: v1
+EOF
+kubectl -n metax-operator delete pod -l app=metax-gpu-device   # 让插件重载配置
+kubectl get nodes -o json | jq -r '.items[] |
+  select(.status.allocatable["metax-tech.com/sgpu"] != null) |
+  "\(.metadata.name): sgpu=\(.status.allocatable["metax-tech.com/sgpu"])"'
+# 预期: worker01: sgpu=128 / worker02: sgpu=128 (8 卡 × 16 切片)
+```
+
+> ⚠ 只改 ConfigMap 不够持久: 同时把同样的 `cluster-config` 写回 ClusterOperator CR 的
+> `spec.devicePlugin.cmInit.config.cluster-config`(例如 `kubectl -n metax-operator edit
+> clusteroperator cluster-operator`), 否则 ConfigMap 被删除/重建时可能回到 native。
+>
+> 切回整卡模式: 把 `mode` 改回 `"native"`(CM + CR) 并重启 `metax-gpu-device`。
 
 ### 2.1 镜像
 
@@ -124,13 +165,14 @@ spec:
 
 ### 5.2 sGPU 共享(显存 + 算力比例)
 
+> 需要 vendor 插件运行在 `mode: sgpu`(见 §2.0)。`vcore` 是算力百分比(100=整卡算力),
+> `vmemory` 单位 GiB; 省略 `vcore`/`vmemory` 表示 100% / 整卡显存。
+
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
   name: metax-sgpu
-  annotations:
-    metax-tech.com/sgpu-topology-aware: "true"   # 可选;覆盖全局 HAMI_METAX_SGPU_TOPOLOGY_AWARE
 spec:
   containers:
     - name: ubuntu
@@ -138,25 +180,64 @@ spec:
       command: ["sleep", "infinity"]
       resources:
         limits:
-          metax-tech.com/sgpu: 1      # 1 个共享 GPU
+          metax-tech.com/sgpu: 1      # 1 个共享 GPU(sGPU 切片)
           metax-tech.com/vcore: 60    # 60% 算力
           metax-tech.com/vmemory: 4   # 4 GiB 显存(裸整数单位 GiB)
 ```
 
 说明:
 - Pod 不需要手写 `schedulerName` —— admission webhook 检测到设备资源后自动注入 `hami-scheduler`;
-- 拓扑策略(同 MetaXLink/PCIe Switch 优先)由 vendor plugin 与 HAMi 协同,`sgpuTopologyAware=true` 仅影响
-  sGPU 100% 算力请求;整卡请求不受该开关影响;
-- 资源名必须与 vendor plugin 一致(默认 `metax-tech.com/*`;改过插件资源名时同步改 chart `devices.metax.*`)。
+- 多个 Pod 可以共享同一张物理 GPU: HAMi 记录每个 Pod 的 `compute`/`vRam`,
+  vendor 插件创建独立 sGPU 切片(宿主 `mx-smi` 的 **Sliced GPU** 表可见);
+- 资源名必须与 vendor plugin 一致(默认 `metax-tech.com/*`;改过插件资源名时同步改 chart `devices.metax.*`);
+- 整卡请求(`metax-tech.com/gpu: 1`)要求 vendor 插件为 `native` 模式;`sgpu` 模式下该资源为 0。
+
+### 5.3 拓扑感知调度(vcore=100)
+
+全局开关: 安装时 `HAMI_METAX_SGPU_TOPOLOGY_AWARE=true`(写入 chart device-config);
+也可用 Pod 注解按需覆盖。**仅对 100% 算力的 sGPU 请求生效**;配合
+`hami.io/node-scheduler-policy: spread|binpack` 控制分散/集中。
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: metax-topo
+  annotations:
+    metax-tech.com/sgpu-topology-aware: "true"
+    hami.io/node-scheduler-policy: "spread"   # spread=跨 GPU/NUMA 分散; binpack=尽量集中
+spec:
+  containers:
+    - name: main
+      image: <MACA 镜像, 如 registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64>
+      command: ["sleep", "infinity"]
+      resources:
+        limits:
+          metax-tech.com/sgpu: 1
+          metax-tech.com/vcore: 100
+          metax-tech.com/vmemory: 4
+```
+
+- `spread`: 多个 Pod 尽量分散到不同 GPU / NUMA 组; `binpack`: 集中到少数节点/GPU
+  (受 vendor 的 `CardInsufficientCore` 等算力 accounting 限制);
+- 拓扑信息(zone/hop scores/NUMA/linkZone)由 vendor plugin 写入 node 注解, 见 §8.3;
+- 观察结果: `kubectl describe pod` 的 `FilteringSucceed` 事件会打印节点评分;
+  HAMi extender 日志会打印分配到的 GPU UUID。
 
 ## 6. 验证口径(`--steps verify_hami`)
 
 1. `hami-scheduler` Deployment Ready;
 2. `hami-webhook` MutatingWebhookConfiguration 存在;
 3. `hami-scheduler-device` ConfigMap 含 `metax-tech.com/{gpu,sgpu,vcore,vmemory}`;
-4. 有节点声明 `metax-tech.com/gpu` allocatable 时: 创建 sGPU 测试 Pod(`sgpu=1/vcore=60/vmemory=4`),
-   断言 webhook 注入 `schedulerName=hami-scheduler`、Pod Ready;容器内 `/dev/mxcd` 存在为增强项(warn);
+4. 节点有 `metax-tech.com/gpu` **或** `metax-tech.com/sgpu` allocatable 时: 创建测试 Pod
+   - native 模式: `metax-tech.com/gpu: 1`
+   - sGPU 模式: `metax-tech.com/sgpu: 1` / `vcore=${HAMI_VERIFY_VCORE:-25}` / `vmemory=${HAMI_VERIFY_VMEMORY:-4}`
+   断言 webhook 注入 `schedulerName=hami-scheduler`、Pod Ready;
 5. 无沐曦卡: 组件级通过并明确告警跳过 GPU 端到端(不误报)。
+
+> 探针默认只用 **25% 算力 / 4GiB**(避免集群已有 GPU 负载时因 `CardInsufficientCore` 误判失败);
+> 可用 `HAMI_VERIFY_VCORE`、`HAMI_VERIFY_VMEMORY`、`HAMI_VERIFY_WAIT_SECONDS`(默认 180s)覆盖。
+> sGPU 模式下若所有 GPU 算力已被占满, 先释放负载或降低 `HAMI_VERIFY_VCORE`。
 
 ## 7. 故障排查
 
@@ -168,7 +249,150 @@ spec:
 | 镜像拉取失败 | 节点 containerd 是否信任集群内置 registry(`05_k8s_registry.sh`);`HAMI_IMAGE_MODE=offline` 时 tar 是否在 `HAMI_OFFLINE_DIR` |
 | `HAMI_IMAGE_MODE=auto` 时推镜像失败 | 安装机不可达拉取源: 默认 `m.daocloud.io`;可改用离线 tar(`HAMI_IMAGE_MODE=offline` 并备料)或设 `HAMI_IMAGE_SOURCE=upstream` |
 
-## 8. 边界(本分支)
+## 8. 实机验证案例(2026-11-23, MetaX C550)
+
+### 8.1 测试环境
+
+| 项 | 值 |
+|---|---|
+| 节点 | 2× worker(worker01/worker02), 各 **8× MetaX C550 64GB** |
+| OS / 内核 | Ubuntu 24.04.5 / 6.8.0-139-generic, 255 核 |
+| 驱动 | 宿主驱动 3.9.1.33(`mx-smi` 可见 8 卡) |
+| vendor 插件 | `mode: sgpu`,节点 allocatable `metax-tech.com/sgpu=128` |
+| HAMi | chart 2.11.0,`HAMI_METAX_SGPU_TOPOLOGY_AWARE=true` |
+
+### 8.2 如何查看 vGPU 资源使用情况
+
+1. **节点 allocatable**:
+
+   ```bash
+   kubectl get nodes -o json | jq -r '.items[] |
+     select(.status.allocatable["metax-tech.com/sgpu"] != null) |
+     "\(.metadata.name): sgpu=\(.status.allocatable["metax-tech.com/sgpu"])"'
+   ```
+
+2. **宿主 `mx-smi` — Sliced GPU 表**(最直观的 vGPU 配额):
+
+   ```bash
+   ssh <node> mx-smi
+   ```
+
+   ```text
+   | Sliced GPU                                                                    |
+   |------------------------------------+---------------------+--------------------|
+   | Minor    GPU    sGPU-Id    Compute | Vram Quota          | sGPU-Util          |
+   |====================================+=====================+====================|
+   | 006      0      0          25%     | 0/8192 MiB          | 0%                 |
+   | 013      0      1          25%     | 0/8192 MiB          | 0%                 |
+   | 002      1      0          25%     | 0/8192 MiB          | 0%                 |
+   ...
+   ```
+
+   每行 = 一个 sGPU 切片: `Compute` 为算力配额, `Vram Quota` 为显存配额。
+
+3. **Pod 注解**(HAMi/vendor 写入):
+
+   ```bash
+   kubectl -n hami-demo get pod hami-share-0 -o jsonpath='{.metadata.annotations}' | jq
+   ```
+
+   ```json
+   "hami.io/metax-sgpu-devices-allocated": "GPU-cacd9404-...,Metax-SGPU,8192,25:;",
+   "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-cacd9404-...\",\"compute\":25,\"vRam\":8192}]]",
+   "metax-tech.com/gpu-allocated-status": "[{\"sgpus\":[{\"uuid\":\"GPU-eb3ddc7a-...\",\"bdf\":\"0000:e3:00.0\"}],\"status\":\"finished\"}]"
+   ```
+
+   - `metax-sgpu-devices-allocated`: `<物理 GPU UUID>,Metax-SGPU,<vRam MiB>,<compute%>`
+   - `gpu-devices-allocated`: JSON `compute` / `vRam`
+   - `gpu-allocated-status`: sGPU UUID + 物理 GPU BDF
+
+4. **HAMi scheduler extender 日志**:
+
+   ```bash
+   kubectl -n kube-system logs deploy/hami-scheduler -c vgpu-scheduler-extender --tail=200 \
+     | grep -E 'Metax-SGPU|NodeFitPod|NodeUnfitPod'
+   ```
+
+   ```text
+   Encoded container Devices: GPU-cacd9404-...,Metax-SGPU,8192,25:
+   "NodeFitPod" pod="hami-demo/hami-share-11" node="...worker01" score=9.609375
+   "NodeUnfitPod" pod="hami-demo/hami-share-11" node="...worker02" reason="8/8 CardInsufficientCore"
+   ```
+
+5. **容器内 `mx-smi`**: 可见分配到的 vGPU(与宿主 Sliced GPU 表对应);
+   显存/算力上限以宿主 Sliced GPU 表和 Pod 注解为准。
+
+### 8.3 如何查看拓扑感知结果
+
+1. **MetaX 拓扑注解**(vendor plugin 写到每个 node):
+
+   ```bash
+   kubectl get node cubestack-k8s-worker01 -o jsonpath='{.metadata.annotations}' | jq \
+     'with_entries(select(.key|startswith("metax-tech.com/gpu.topology")))'
+   kubectl get node cubestack-k8s-worker01 \
+     -o jsonpath='{.metadata.annotations.metax-tech\.com/node-gpu-devices}' | jq
+   ```
+
+   - `metax-tech.com/gpu.topology.zones`: `gpu-group-0` / `DirectLink` / weight 60
+   - `metax-tech.com/gpu.topology.scores|losses`: 按 hop 数的评分/代价
+   - `metax-tech.com/node-gpu-devices`: 每 GPU 的 `numa`、`linkZone`、`totalCompute`、`totalVRam`
+
+2. **`mx-smi topo -m`**(每个 GPU 节点):
+
+   ```text
+   GPU0/1 -> NUMA 0    GPU2/3 -> NUMA 2
+   GPU4/5 -> NUMA 4    GPU6/7 -> NUMA 6
+   所有 GPU 之间: MX1 (MetaXLink)
+   ```
+
+3. **调度事件评分**(topology-aware 的影响):
+
+   ```bash
+   kubectl -n hami-demo describe pod hami-topo-0 | grep -A2 FilteringSucceed
+   ```
+
+   ```text
+   FilteringSucceed  find fit node(worker02),
+     3 nodes not fit, 2 nodes fit(worker01:700000.00, worker02:600001.38)
+   ```
+
+4. **HAMi device config 确认开关**:
+
+   ```bash
+   kubectl -n kube-system get cm hami-scheduler-device -o yaml | grep -A7 'metax:'
+   # sgpuTopologyAware: true
+   ```
+
+### 8.4 实测结果
+
+**vGPU 共享**(16 Pod / 25% / 8GiB, binpack):
+
+| 物理 GPU | Pod 数 | sGPU 切片 |
+|---|---|---|
+| GPU0-4(各) | 2 | 2× (25% / 8192MiB) |
+| GPU5、GPU6 | 3 | 3× (25% / 8192MiB) |
+| **合计** | **16 Pod / 7 GPU** | **16 切片** |
+
+worker02 被 scheduler 拒绝: `CardInsufficientCore`(topo Pod 已占满算力);harness 正确 accounting。
+
+**拓扑感知**(8 Pod × `vcore=100`, `spread` + `sgpu-topology-aware=true`):
+
+| 结果 | 值 |
+|---|---|
+| 分布 | 8 Pod → **8 张不同 GPU**(worker02 7 张 + worker01 1 张) |
+| NUMA 覆盖 | worker02 覆盖全部 **4 个 NUMA 组**(NUMA 0/2/4/6) |
+| 调度评分 | `worker01:700000.00, worker02:600001.38`(普通 binpack ~9.61) |
+| 验证 | 全部 Pod `schedulerName=hami-scheduler`,webhook 自动注入 |
+
+### 8.5 清理
+
+```bash
+kubectl delete ns hami-demo
+# 如需回退 vendor 插件:
+#   把 metax-device-config 与 CR cmInit 的 mode 改回 "native", 再重启 metax-gpu-device
+```
+
+## 9. 边界(本分支)
 
 - 只支持 **沐曦(MetaX)**;HAMi 自带 NVIDIA device plugin 固定关闭(NVIDIA 场景不在本次范围)。
 - 镜像尚未登记到 `container-image-mirror` / 离线版本树(按用户口径:仅 installer 分支,验证后推送 fork)。
