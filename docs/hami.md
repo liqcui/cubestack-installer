@@ -146,7 +146,12 @@ sudo env CUBESTACK_MODULE_ACTION=uninstall \
 
 ## 5. 沐曦作业示例
 
-### 5.1 整卡
+### 5.1 整卡(vendor `native` 模式)
+
+> ⚠ 仅当 `metax-device-config` 为 `mode: native` 时可用。`mode: sgpu` 下 vendor 插件
+> 只 advertise `metax-tech.com/sgpu`(本环境 128/节点),`metax-tech.com/gpu=0`,
+> 本示例的 Pod 会因 `Insufficient metax-tech.com/gpu` 一直 Pending。
+> sGPU 模式下要独占整卡,用 §5.2 的等价写法(100% 算力 + 整卡显存)。
 
 ```yaml
 apiVersion: v1
@@ -190,7 +195,10 @@ spec:
 - 多个 Pod 可以共享同一张物理 GPU: HAMi 记录每个 Pod 的 `compute`/`vRam`,
   vendor 插件创建独立 sGPU 切片(宿主 `mx-smi` 的 **Sliced GPU** 表可见);
 - 资源名必须与 vendor plugin 一致(默认 `metax-tech.com/*`;改过插件资源名时同步改 chart `devices.metax.*`);
-- 整卡请求(`metax-tech.com/gpu: 1`)要求 vendor 插件为 `native` 模式;`sgpu` 模式下该资源为 0。
+- 整卡请求(`metax-tech.com/gpu: 1`)仅在 §5.1 的 `native` 模式可用;`sgpu` 模式下该资源为 0。
+- **sGPU 模式独占整卡**: `metax-tech.com/sgpu: 1` + `metax-tech.com/vcore: 100` +
+  `metax-tech.com/vmemory: 64`(C550 64GB,单位 GiB);也可省略 `vcore`/`vmemory`
+  (默认 100% / 整卡显存)。HAMi 不会再往这张卡上调度其他切片,效果等同整卡。
 
 ### 5.3 拓扑感知调度(vcore=100)
 
