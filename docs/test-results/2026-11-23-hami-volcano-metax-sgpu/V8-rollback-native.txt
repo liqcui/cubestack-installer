@@ -1,0 +1,19 @@
+===== V8 rollback -> native: patch CM + CR =====
+configmap/metax-device-config patched
+clusteroperator.gpu.metax-tech.com/cluster-operator patched
+pod "metax-gpu-device-j68fb" deleted from metax-operator namespace
+pod "metax-gpu-device-xhjlh" deleted from metax-operator namespace
+Waiting for daemon set "metax-gpu-device" rollout to finish: 0 of 2 updated pods are available...
+Waiting for daemon set "metax-gpu-device" rollout to finish: 1 of 2 updated pods are available...
+daemon set "metax-gpu-device" successfully rolled out
+===== V8 native allocatable =====
+cubestack-k8s-worker01 gpu=8 sgpu=0
+cubestack-k8s-worker02 gpu=8 sgpu=0
+===== V8 native CM/CR =====
+mode: "native"
+sgpuHybrid: null
+shareNums: 4
+deviceAllocationStrategy: "native"mode: "native"
+sgpuHybrid: null
+shareNums: 4
+deviceAllocationStrategy: "native"

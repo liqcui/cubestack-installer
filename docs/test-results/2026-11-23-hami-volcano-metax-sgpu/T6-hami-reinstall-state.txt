@@ -1,0 +1,15 @@
+===== T6 hami reinstall state =====
+NAME: hami
+LAST DEPLOYED: Mon Nov 23 23:23:34 2026
+NAMESPACE: kube-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+** Please be patient while the chart is being deployed **
+NAME                              READY   STATUS    RESTARTS   AGE   IP               NODE                     NOMINATED NODE   READINESS GATES
+hami-scheduler-5f654fc6c5-hsp7f   2/2     Running   0          21s   10.233.105.214   cubestack-k8s-worker01   <none>           <none>
+NAME           WEBHOOKS   AGE
+hami-webhook   1          21s
+cubestack-k8s-worker01 sgpu=128
+cubestack-k8s-worker02 sgpu=128

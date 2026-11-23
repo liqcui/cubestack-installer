@@ -1,0 +1,28 @@
+mx-smi  version: 2.3.4
+
+=================== MetaX System Management Interface Log ===================
+Timestamp                                         : Mon Nov 23 23:10:35 2026
+
+Attached GPUs                                     : 8
+Device link type matrix
+        GPU0    GPU1    GPU2    GPU3    GPU4    GPU5    GPU6    GPU7    Node Affinity  CPU Affinity
+GPU0    X       MX1     MX1     MX1     MX1     MX1     MX1     MX1     0              0-15,128-143
+GPU1    MX1     X       MX1     MX1     MX1     MX1     MX1     MX1     0              0-15,128-143
+GPU2    MX1     MX1     X       MX1     MX1     MX1     MX1     MX1     2              32-47,160-175
+GPU3    MX1     MX1     MX1     X       MX1     MX1     MX1     MX1     2              32-47,160-175
+GPU4    MX1     MX1     MX1     MX1     X       MX1     MX1     MX1     4              64-79,192-207
+GPU5    MX1     MX1     MX1     MX1     MX1     X       MX1     MX1     4              64-79,192-207
+GPU6    MX1     MX1     MX1     MX1     MX1     MX1     X       MX1     6              96-111,224-239
+GPU7    MX1     MX1     MX1     MX1     MX1     MX1     MX1     X       6              96-111,224-239
+
+Legend:
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  MX#  = Connection traversing a bonded set of # MetaXLinks
+  ETH  = Connection traversing Eth
+  NA   = Connection type is unknown
+

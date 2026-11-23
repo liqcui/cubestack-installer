@@ -1,0 +1,111 @@
+mx-smi  version: 2.3.4
+
+=================== MetaX System Management Interface Log ===================
+Timestamp                                         : Mon Nov 23 23:10:34 2026
+
+Attached GPUs                                     : 8
+GPU#0  MXC550  0000:23:00.0
+    Memory
+        vis_vram total                            : 67108864 KB
+        vis_vram used                             : 881084 KB
+        vis_vram usage                            : 1.3 %
+        vram total                                : 67108864 KB
+        vram used                                 : 881084 KB
+        vram usage                                : 1.3 %
+        xtt total                                 : 1185642228 KB
+        xtt used                                  : 137248 KB
+        xtt usage                                 : 0 %
+        vram driver reserved                      : 881084 KB
+
+GPU#1  MXC550  0000:26:00.0
+    Memory
+        vis_vram total                            : 67108864 KB
+        vis_vram used                             : 881084 KB
+        vis_vram usage                            : 1.3 %
+        vram total                                : 67108864 KB
+        vram used                                 : 881084 KB
+        vram usage                                : 1.3 %
+        xtt total                                 : 1185642228 KB
+        xtt used                                  : 137248 KB
+        xtt usage                                 : 0 %
+        vram driver reserved                      : 881084 KB
+
+GPU#2  MXC550  0000:63:00.0
+    Memory
+        vis_vram total                            : 67108864 KB
+        vis_vram used                             : 881084 KB
+        vis_vram usage                            : 1.3 %
+        vram total                                : 67108864 KB
+        vram used                                 : 881084 KB
+        vram usage                                : 1.3 %
+        xtt total                                 : 1185642228 KB
+        xtt used                                  : 137248 KB
+        xtt usage                                 : 0 %
+        vram driver reserved                      : 881084 KB
+
+GPU#3  MXC550  0000:66:00.0
+    Memory
+        vis_vram total                            : 67108864 KB
+        vis_vram used                             : 881084 KB
+        vis_vram usage                            : 1.3 %
+        vram total                                : 67108864 KB
+        vram used                                 : 881084 KB
+        vram usage                                : 1.3 %
+        xtt total                                 : 1185642228 KB
+        xtt used                                  : 137248 KB
+        xtt usage                                 : 0 %
+        vram driver reserved                      : 881084 KB
+
+GPU#4  MXC550  0000:a3:00.0
+    Memory
+        vis_vram total                            : 67108864 KB
+        vis_vram used                             : 881084 KB
+        vis_vram usage                            : 1.3 %
+        vram total                                : 67108864 KB
+        vram used                                 : 881084 KB
+        vram usage                                : 1.3 %
+        xtt total                                 : 1185642228 KB
+        xtt used                                  : 137248 KB
+        xtt usage                                 : 0 %
+        vram driver reserved                      : 881084 KB
+
+GPU#5  MXC550  0000:a4:00.0
+    Memory
+        vis_vram total                            : 67108864 KB
+        vis_vram used                             : 881084 KB
+        vis_vram usage                            : 1.3 %
+        vram total                                : 67108864 KB
+        vram used                                 : 881084 KB
+        vram usage                                : 1.3 %
+        xtt total                                 : 1185642228 KB
+        xtt used                                  : 137248 KB
+        xtt usage                                 : 0 %
+        vram driver reserved                      : 881084 KB
+
+GPU#6  MXC550  0000:e3:00.0
+    Memory
+        vis_vram total                            : 67108864 KB
+        vis_vram used                             : 881200 KB
+        vis_vram usage                            : 1.3 %
+        vram total                                : 67108864 KB
+        vram used                                 : 881200 KB
+        vram usage                                : 1.3 %
+        xtt total                                 : 1185642228 KB
+        xtt used                                  : 137248 KB
+        xtt usage                                 : 0 %
+        vram driver reserved                      : 881200 KB
+
+GPU#7  MXC550  0000:e4:00.0
+    Memory
+        vis_vram total                            : 67108864 KB
+        vis_vram used                             : 881200 KB
+        vis_vram usage                            : 1.3 %
+        vram total                                : 67108864 KB
+        vram used                                 : 881200 KB
+        vram usage                                : 1.3 %
+        xtt total                                 : 1185642228 KB
+        xtt used                                  : 137248 KB
+        xtt usage                                 : 0 %
+        vram driver reserved                      : 881200 KB
+
+End of Log

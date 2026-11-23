@@ -1,0 +1,61 @@
+===== ENV worker01 OS/driver =====
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+6.8.0-139-generic
+commonlib_3.9.1 3.9.1.6
+maca_sdk_pkg_config_3.9.1 3.9.1.6
+macafy_3.9.1 3.9.1.6
+macainfo_3.9.1 3.9.1.6
+mcanalyzer_3.9.1 3.9.1.6
+mcblas_3.9.1 3.9.1.6
+mcblaslt_3.9.1 3.9.1.6
+mccl_3.9.1 3.9.1.6
+mccompiler_3.9.1 3.9.1.6
+mcdnn_3.9.1 3.9.1.6
+mcdnnlt_3.9.1 3.9.1.6
+mcfft_3.9.1 3.9.1.6
+mcfile_3.9.1 3.9.1.6
+mcflashattn_3.9.1 3.9.1.6
+mcflashinfer_3.9.1 3.9.1.6
+mcgpufort_3.9.1 3.9.1.6
+mchotspot_3.9.1 3.9.1.6
+mcimage_3.9.1 3.9.1.6
+mcjpeg_3.9.1 3.9.1.6
+mckernellib_3.9.1 3.9.1.6
+mcmathlib_3.9.1 3.9.1.6
+mcmpp_3.9.1 3.9.1.6
+mcpti_3.9.1 3.9.1.6
+mcrand_3.9.1 3.9.1.6
+mcruntime_3.9.1 3.9.1.6
+mcsanitizer-public_3.9.1 3.9.1.6
+mcsolver_3.9.1 3.9.1.6
+mcsolverit_3.9.1 3.9.1.6
+mcsparse_3.9.1 3.9.1.6
+mcthrust_3.9.1 3.9.1.6
+mctlass_3.9.1 3.9.1.6
+mctlassex_3.9.1 3.9.1.6
+mctoolext_3.9.1 3.9.1.6
+mctracer-3.9.1 3.9.1.6
+metax-linux-dkms 3.10.33
+mxccl_plugin_3.9.1 3.9.1.6
+mxcommlib_tools_3.9.1 3.9.1.6
+mxcompute_3.9.1 3.9.1.6
+mxdiagease-3.9.1 3.9.1.6
+mxexporter-3.9.1 3.9.1.6
+mxfortran_3.9.1 3.9.1.6
+mxgdrcopy-3.9.1 3.9.1.6
+mxgpu_llvm_3.9.1 3.9.1.6
+mxkw_3.9.1 3.9.1.6
+mxmaca-install-3.9.1 3.9.1.6
+mxompi-3.9.1 3.9.1.6
+mxshmem_3.9.1 3.9.1.6
+mxsml-devel-3.9.1 3.9.1.6
+mxucx-3.9.1 3.9.1.6
+mxvpu_3.9.1 3.9.1.6
+sample_3.9.1 3.9.1.6
+vscode-clangd_3.9.1 3.9.1.6
+
+mx-smi  version: 2.3.4
+
+CPU(s):                                  256
+CPU(s) scaling MHz:                      52%
+NUMA node(s):                            8

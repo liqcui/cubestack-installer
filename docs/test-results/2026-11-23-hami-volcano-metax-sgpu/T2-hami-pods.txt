@@ -1,0 +1,3 @@
+===== T2 hami pods =====
+NAME                              READY   STATUS    RESTARTS   AGE     IP              NODE                     NOMINATED NODE   READINESS GATES
+hami-scheduler-68dd79f77c-56tr8   2/2     Running   0          5h42m   10.233.119.55   cubestack-k8s-worker02   <none>           <none>

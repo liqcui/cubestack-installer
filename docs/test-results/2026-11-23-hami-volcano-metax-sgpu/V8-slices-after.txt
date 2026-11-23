@@ -1,0 +1,16 @@
+===== V8 slices after cleanup =====
+worker01 sliced rows: 0
+worker02 sliced rows: 0
+| 0     MetaX C550 | 0           Off | 0000:23:00.0        | 0%          Disabled |
+| 1     MetaX C550 | 1           Off | 0000:26:00.0        | 0%          Disabled |
+| 2     MetaX C550 | 2           Off | 0000:63:00.0        | 0%          Disabled |
+| 3     MetaX C550 | 3           Off | 0000:66:00.0        | 0%          Disabled |
+| 4     MetaX C550 | 4           Off | 0000:a3:00.0        | 0%           Enabled |
+| 5     MetaX C550 | 5           Off | 0000:a4:00.0        | 0%           Enabled |
+| 6     MetaX C550 | 6           Off | 0000:e3:00.0        | 0%          Disabled |
+| 7     MetaX C550 | 7           Off | 0000:e4:00.0        | 0%           Enabled |
+NAME                      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                                                                                        AGE
+metax-container-runtime   2         2         2       2            2           metax-tech.com/gpu.installed=true                                                                    6h23m
+metax-gpu-device          2         2         2       2            2           metax-tech.com/gpu.installed=true,metax-tech.com/maca.ready=true,metax-tech.com/runtime.ready=true   6h23m
+metax-gpu-label           5         5         5       5            5           <none>                                                                                               6h23m
+metax-maca                2         2         2       2            2           metax-tech.com/gpu.installed=true,metax-tech.com/runtime.ready=true                                  6h23m

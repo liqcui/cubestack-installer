@@ -1,0 +1,6 @@
+===== V5 cubestack-k8s-worker01 gpu.topology annotations =====
+{
+  "metax-tech.com/gpu.topology.losses": "{\"1\":530,\"2\":840,\"3\":1090,\"4\":1120,\"5\":1090,\"6\":840,\"7\":530,\"8\":0}",
+  "metax-tech.com/gpu.topology.scores": "{\"1\":0,\"2\":110,\"3\":250,\"4\":500,\"5\":780,\"6\":1170,\"7\":1590,\"8\":2120}",
+  "metax-tech.com/gpu.topology.zones": "{\"metadata\":{},\"zones\":[{\"name\":\"gpu-group-0\",\"type\":\"DirectLink\",\"attributes\":[{\"name\":\"topologyLinkWeight\",\"value\":\"60\"}],\"resources\":[{\"name\":\"metax-tech.com/gpu\",\"capacity\":\"8\",\"allocatable\":\"8\",\"available\":\"8\"}]}]}"
+}

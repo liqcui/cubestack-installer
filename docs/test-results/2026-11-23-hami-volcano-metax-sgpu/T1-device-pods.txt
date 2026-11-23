@@ -1,0 +1,4 @@
+===== T1 metax device plugin pods =====
+NAME                     READY   STATUS    RESTARTS   AGE     IP               NODE                     NOMINATED NODE   READINESS GATES
+metax-gpu-device-j68fb   1/1     Running   0          5h42m   10.233.105.243   cubestack-k8s-worker01   <none>           <none>
+metax-gpu-device-xhjlh   1/1     Running   0          5h42m   10.233.119.53    cubestack-k8s-worker02   <none>           <none>

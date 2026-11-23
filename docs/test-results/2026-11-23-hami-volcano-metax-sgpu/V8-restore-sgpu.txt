@@ -1,0 +1,11 @@
+===== V8 restore -> sgpu: patch CM + CR =====
+configmap/metax-device-config patched
+clusteroperator.gpu.metax-tech.com/cluster-operator patched
+pod "metax-gpu-device-d7zw5" deleted from metax-operator namespace
+pod "metax-gpu-device-nllss" deleted from metax-operator namespace
+Waiting for daemon set "metax-gpu-device" rollout to finish: 0 of 2 updated pods are available...
+Waiting for daemon set "metax-gpu-device" rollout to finish: 1 of 2 updated pods are available...
+daemon set "metax-gpu-device" successfully rolled out
+===== V8 restored allocatable =====
+cubestack-k8s-worker01 gpu=0 sgpu=128
+cubestack-k8s-worker02 gpu=0 sgpu=128

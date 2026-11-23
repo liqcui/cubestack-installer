@@ -1,0 +1,9 @@
+===== V5 delete 8 topo pods =====
+pod "hami-topo-0" deleted from hami-demo namespace
+pod "hami-topo-1" deleted from hami-demo namespace
+pod "hami-topo-2" deleted from hami-demo namespace
+pod "hami-topo-3" deleted from hami-demo namespace
+pod "hami-topo-4" deleted from hami-demo namespace
+pod "hami-topo-5" deleted from hami-demo namespace
+pod "hami-topo-6" deleted from hami-demo namespace
+pod "hami-topo-7" deleted from hami-demo namespace

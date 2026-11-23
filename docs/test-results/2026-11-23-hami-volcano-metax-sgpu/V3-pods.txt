@@ -1,0 +1,8 @@
+===== V3 create ns + apply hami-example-pods.yaml =====
+pod/hami-metax-sgpu created
+pod/hami-metax-topo created
+pod/hami-metax-sgpu condition met
+pod/hami-metax-topo condition met
+NAME              READY   STATUS    RESTARTS   AGE   IP              NODE                     NOMINATED NODE   READINESS GATES
+hami-metax-sgpu   1/1     Running   0          5s    10.233.119.3    cubestack-k8s-worker02   <none>           <none>
+hami-metax-topo   1/1     Running   0          5s    10.233.119.36   cubestack-k8s-worker02   <none>           <none>

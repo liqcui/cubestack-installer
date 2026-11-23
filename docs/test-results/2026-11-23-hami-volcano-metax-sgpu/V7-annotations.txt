@@ -1,0 +1,17 @@
+===== V7 annotations =====
+--- hami-mem-demo
+{
+  "hami.io/metax-sgpu-devices-allocated": "GPU-963a8bc8-9f6f-178b-8a1e-85181989c185,Metax-SGPU,8192,25:;",
+  "hami.io/metax-sgpu-devices-to-allocate": "GPU-963a8bc8-9f6f-178b-8a1e-85181989c185,Metax-SGPU,8192,25:;",
+  "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"main\",\"sgpus\":[{\"uuid\":\"GPU-aaedf1e7-9de9-ea67-2e9f-5b518fb3eed1\",\"bdf\":\"0000:a4:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+  "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-963a8bc8-9f6f-178b-8a1e-85181989c185\",\"compute\":25,\"vRam\":8192}]]",
+  "metax-tech.com/sgpu-qos-policy": "best-effort"
+}
+--- volcano-mem-demo-mem-0
+{
+  "hami.io/metax-sgpu-devices-allocated": "GPU-a769be12-de57-a9a8-9133-b226120173b8,Metax-SGPU,8192,25:;",
+  "hami.io/metax-sgpu-devices-to-allocate": "GPU-a769be12-de57-a9a8-9133-b226120173b8,Metax-SGPU,8192,25:;",
+  "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"main\",\"sgpus\":[{\"uuid\":\"GPU-eaa5f2b7-42f7-135a-ee07-062156e1edbe\",\"bdf\":\"0000:a3:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+  "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-a769be12-de57-a9a8-9133-b226120173b8\",\"compute\":25,\"vRam\":8192}]]",
+  "metax-tech.com/sgpu-qos-policy": "best-effort"
+}

@@ -1,0 +1,28 @@
+===== T1 clusteroperator CR spec.devicePlugin =====
+{
+  "name": "cluster-operator",
+  "devicePlugin": {
+    "cmInit": {
+      "config": {
+        "cluster-config": "mode: \"sgpu\"\nsgpuHybrid: null\nshareNums: 4\ndeviceAllocationStrategy: \"native\"\n",
+        "version": "v1"
+      }
+    },
+    "connectDetectPeriod": "0s",
+    "deploy": true,
+    "healthyInterval": 5,
+    "image": {
+      "name": "gpu-device",
+      "pullPolicy": "IfNotPresent",
+      "registry": "registry.cubestack.io:5000/metax",
+      "version": "0.15.3"
+    },
+    "log": {
+      "dir": "/var/log/metax",
+      "format": "json",
+      "level": "info",
+      "maxAge": "26w",
+      "rotationTime": "1w"
+    }
+  }
+}

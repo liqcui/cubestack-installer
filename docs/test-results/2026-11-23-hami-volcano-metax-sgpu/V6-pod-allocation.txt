@@ -1,0 +1,19 @@
+===== V6 schedulerName + annotations per pod =====
+--- volcano-sgpu-demo-sgpu-0
+{
+  "hami.io/metax-sgpu-devices-allocated": "GPU-cacd9404-9913-9ae3-8eff-1c2ca3edfe7d,Metax-SGPU,8192,25:;",
+  "hami.io/metax-sgpu-devices-to-allocate": "GPU-cacd9404-9913-9ae3-8eff-1c2ca3edfe7d,Metax-SGPU,8192,25:;",
+  "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"main\",\"sgpus\":[{\"uuid\":\"GPU-ec47ed2a-dd08-68be-54b1-9fae4f58f8b2\",\"bdf\":\"0000:e3:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+  "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-cacd9404-9913-9ae3-8eff-1c2ca3edfe7d\",\"compute\":25,\"vRam\":8192}]]",
+  "metax-tech.com/sgpu-qos-policy": "best-effort",
+  "metax-tech.com/sgpu-topology-aware": "true"
+}
+--- volcano-sgpu-demo-sgpu-1
+{
+  "hami.io/metax-sgpu-devices-allocated": "GPU-e3980126-5b13-7fc1-7d68-cbda75ed398b,Metax-SGPU,8192,25:;",
+  "hami.io/metax-sgpu-devices-to-allocate": "GPU-e3980126-5b13-7fc1-7d68-cbda75ed398b,Metax-SGPU,8192,25:;",
+  "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"main\",\"sgpus\":[{\"uuid\":\"GPU-5398938f-4bd6-dd65-2d68-6da9c54a4f47\",\"bdf\":\"0000:e4:00.0\",\"index\":0}],\"status\":\"finished\"}]",
+  "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-e3980126-5b13-7fc1-7d68-cbda75ed398b\",\"compute\":25,\"vRam\":8192}]]",
+  "metax-tech.com/sgpu-qos-policy": "best-effort",
+  "metax-tech.com/sgpu-topology-aware": "true"
+}

@@ -1,0 +1,137 @@
+[90m[DEBUG] 自动检测 release.env: /opt/cubestack-installer/deployments/offline-files/release.env → release=2.1-SNAPSHOT-20261121-78a83fb[0m
+[90m[DEBUG] release 模式生效: 2.1-SNAPSHOT-20261121-78a83fb(OFFLINE_FILES_ROOT=/opt/cubestack-installer/deployments/offline-files)[0m
+[90m[DEBUG] 发现版本树私有模块: /opt/cubestack-installer/deployments/modules[0m
+[90m[DEBUG] 版本档案生效: /opt/cubestack-installer/deployments/config/profiles/v2.32.0.profile[0m
+[90m[DEBUG] 自动检测宿主机物理 IP: 10.66.3.212[0m
+[90m[DEBUG] API 入口=第一个 master: 10.66.3.21[0m
+[90m[DEBUG] REGISTRY_SERVICE_TYPE 留空, 默认 nodeport(与 SERVICE_EXPOSE_MODE=metallb 解耦)[0m
+[90m[DEBUG] REGISTRY_IP 留空, registry=nodeport → 首个 master IP 10.66.3.21[0m
+布局: release  树根: /opt/cubestack-installer/deployments/offline-files  级别: quick
+文件: 283  字节: 173210847941
+⚠  base/hami/README.md: 本地离线包/元数据目录, 不在 release SHA256SUMS 中, 跳过 extra_file 检查
+⚠  base/hami/docker.io_projecthami_hami_v2.11.0.tar: 本地离线包/元数据目录, 不在 release SHA256SUMS 中, 跳过 extra_file 检查
+⚠  base/hami/registry.k8s.io_ingress-nginx_kube-webhook-certgen_v1.6.9.tar: 本地离线包/元数据目录, 不在 release SHA256SUMS 中, 跳过 extra_file 检查
+⚠  metax-gpu/metax-gpu-k8s-package.0.15.3.tar.gz: >256MiB, quick 未深度解压(建议 --level full --deep)
+✅ 校验通过
+[36m→  完整部署日志: /tmp/cubestack-cluster-install.log[0m
+[36m→  集群接入: 本地 kubeconfig 可用 → 直接使用(跳过接入引导)[0m
+[36m→  ==== 集群规划(配置: /opt/cubestack-installer/deployments/config/cluster.conf) ====[0m
+  网络模式: bridge   物理Worker: 192.168.100.0/24
+  SSH密钥: cubestack_k8s   默认密码: <已配置>
+  本次执行模块: platform_placement volcano
+---------------------------------------------
+  ℹ 单组件安装模式(--steps): 只跑指定组件 + 其非基座依赖; 基座类(k8s_deploy/metallb/local_path/k8s_registry 等)按设计未纳入
+  ⚠ 本次未部署的组件(开关关闭, 打开即部署): chrony_pkgs(CHRONY_PKGS_ENABLED=false), k8s_workerbm(WORKER_PKGS_ENABLED=false), kube_vip(KUBE_VIP_ENABLED=false), node_pkgs(NODE_PKGS_ENABLED=false), ceph(CEPH_MODE=none), ceph_csi(CEPH_MODE=none), cephfs_mount(CEPHFS_MOUNT_ENABLED=false), nvidia_gpu_operator(NVIDIA_GPU_OPERATOR_ENABLED=false), hami(HAMI_ENABLED=<未设置>), netshoot(NETSHOOT_ENABLED=false), dev_lab(DEV_LAB_ENABLED=<未设置>)
+     ↳ 立即单跑: --steps <组件名>(如 --steps keycloak); 持久启用: --enable <组件名>
+  ⚠ 开关已开但本次未调度(如 --steps 精确模式/--skip/阶段过滤): gpu_operator, multus, rdma_shared_dev_plugin, cubestack_operator, model_images, node_pool
+  ○ 规划中未实现(伪代码占位, 打开开关也只有伪代码流程): harbor, keycloak, kueue, kubevirt, lustre_csi
+  节点规划(5字段: role,hostname,ip,ssh_user,ssh_password; 虚拟机创建由 tools/vm/create-vms.sh 独立执行):
+    [master] cubestack-k8s-master01  10.66.3.21  (user=ubuntu)
+    [master] cubestack-k8s-master02  10.66.3.22  (user=ubuntu)
+    [master] cubestack-k8s-master03  10.66.3.23  (user=ubuntu)
+    [worker] cubestack-k8s-worker01  10.66.3.39  (user=ubuntu)
+    [worker] cubestack-k8s-worker02  10.66.3.40  (user=ubuntu)
+---------------------------------------------
+[36m→  ==== 开始一键部署(共 2 个模块) ====[0m
+[36m→  [platform_placement] 平台组件 master placement(operator/controller-manager/cubepilot/portal/envoy 控制器等钉到 master) ...[0m
+[36m→    执行: /opt/cubestack-installer/deployments/scripts/.modules-merged.VcaVsZ/03_addon/54_platform_placement.sh[0m
+[90m[DEBUG] 自动检测 release.env: /opt/cubestack-installer/deployments/offline-files/release.env → release=2.1-SNAPSHOT-20261121-78a83fb[0m
+[90m[DEBUG] release 模式生效: 2.1-SNAPSHOT-20261121-78a83fb(OFFLINE_FILES_ROOT=/opt/cubestack-installer/deployments/offline-files)[0m
+[90m[DEBUG] 版本档案生效: /opt/cubestack-installer/deployments/config/profiles/v2.32.0.profile[0m
+[36m→  平台组件 master placement(operator/controller-manager/cubepilot/portal 等)...[0m
+[90m[DEBUG] 自动检测 release.env: /opt/cubestack-installer/deployments/offline-files/release.env → release=2.1-SNAPSHOT-20261121-78a83fb[0m
+[90m[DEBUG] release 模式生效: 2.1-SNAPSHOT-20261121-78a83fb(OFFLINE_FILES_ROOT=/opt/cubestack-installer/deployments/offline-files)[0m
+[90m[DEBUG] 版本档案生效: /opt/cubestack-installer/deployments/config/profiles/v2.32.0.profile[0m
+[36m→  CubeStack operator/平台组件 master placement(Deployment) ...[0m
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+[32m✅   [cubestack-system/deploy/cubestack-operator] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cubestack-system/deploy/cubestack-controller-manager] 已加 master nodeSelector + tolerations[0m
+[33m⚠    [cubestack-system/deploy/cubepilot-api] PVC cubestack-system/cubepilot-api-data 绑定非 master 节点 cubestack-k8s-worker02; 跳过 master placement[0m
+[32m✅   [cubestack-system/deploy/cubepilot-api] 已移除冲突的 master nodeSelector[0m
+[32m✅   [cubestack-system/deploy/cubepilot-operator] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cubestack-system/deploy/cubestack-portal] 已加 master nodeSelector + tolerations[0m
+[32m✅   [envoy-gateway-system/deploy/envoy-gateway] 已加 master nodeSelector + tolerations[0m
+[32m✅   [ai-gateway-system/deploy/ai-gateway-controller] 已加 master nodeSelector + tolerations[0m
+[32m✅   [lws-system/deploy/lws-controller-manager] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cuberouter/deploy/cuberouter] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cuberouter/deploy/cuberouter-cloudnative-pg] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cuberouter/deploy/redis-operator] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/kube-prometheus-grafana] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/kube-prometheus-kube-prome-operator] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/kube-prometheus-kube-state-metrics] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/perses-operator-controller-manager] 已加 master nodeSelector + tolerations[0m
+[32m✅ CubeStack 平台组件 placement apply 完成[0m
+[32m✅ 平台组件 master placement 完成(NODE_POOL_ACTION=apply)[0m
+[32m✅ 模块 [platform_placement] 完成[0m
+[36m→  [volcano] 部署 Volcano(Job/Queue 批处理)并以 hami-scheduler 调度 MetaX vGPU Job ...[0m
+[36m→    执行: /opt/cubestack-installer/deployments/scripts/.modules-merged.VcaVsZ/03_addon/16_volcano.sh[0m
+[90m[DEBUG] 自动检测 release.env: /opt/cubestack-installer/deployments/offline-files/release.env → release=2.1-SNAPSHOT-20261121-78a83fb[0m
+[90m[DEBUG] release 模式生效: 2.1-SNAPSHOT-20261121-78a83fb(OFFLINE_FILES_ROOT=/opt/cubestack-installer/deployments/offline-files)[0m
+[90m[DEBUG] 版本档案生效: /opt/cubestack-installer/deployments/config/profiles/v2.32.0.profile[0m
+[36m→  检查 Volcano 前置条件...[0m
+[32m✅ HAMi scheduler 在位(kube-system/hami-scheduler)[0m
+[32m✅ registry 10.66.3.21:31148/v2/ 可达[0m
+[32m✅ 前置检查通过(registry=registry.cubestack.io:5000, ns=volcano-system)[0m
+[36m→  [1/4] 推送 Volcano 镜像 → registry.cubestack.io:5000/mirrors/** ...[0m
+[32m✅   镜像就绪: 新推 0 个, 已在 registry 跳过 3 个[0m
+[36m→  [2/4] 校验 Volcano chart(1.16.0, sync=offline)...[0m
+[36m→  [3/4] helm upgrade --install volcano → volcano-system(Volcano Job 由 hami-scheduler 调度 GPU Pod)...[0m
+Release "volcano" does not exist. Installing it now.
+NAME: volcano
+LAST DEPLOYED: Mon Nov 23 23:21:46 2026
+NAMESPACE: volcano-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+Thank you for installing volcano.
+
+Your release is named volcano.
+
+For more information on volcano, visit:
+https://volcano.sh/
+[36m→  [4/4] 等待 Volcano controller/scheduler/admission 就绪 ...[0m
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+[32m✅ Volcano 部署完成: volcano-controllers/scheduler/admission @ volcano-system[0m
+[36m→    集成方式: Volcano Job -> spec.schedulerName=hami-scheduler -> HAMi 分配 MetaX vGPU[0m
+[36m→    示例 Job: docs/volcano-example-job.yaml[0m
+[36m→    验证:     sudo ./deploy-cluster.sh --steps verify_volcano[0m
+[36m→    单独卸载: sudo env CUBESTACK_MODULE_ACTION=uninstall bash /opt/cubestack-installer/deployments/scripts/.modules-merged.VcaVsZ/03_addon/16_volcano.sh[0m
+[32m✅ 模块 [volcano] 完成[0m
+=============================================
+[32m✅ 一键部署流程完成(配置: /opt/cubestack-installer/deployments/config/cluster.conf)[0m
+  配置: /opt/cubestack-installer/deployments/config/cluster.conf
+  本次执行: platform_placement volcano
+  完整日志: /tmp/cubestack-cluster-install.log
+  SSH 密钥:   cubestack_k8s
+  Kubeconfig: /opt/cubestack-installer/deployments/kubespray/inventory/cubestack-cluster/artifacts/admin.conf
+              用法: kubectl --kubeconfig=/opt/cubestack-installer/deployments/kubespray/inventory/cubestack-cluster/artifacts/admin.conf get nodes
+  管理凭证:   无 kubeadmin 密码, 管理员权限=admin.conf(客户端证书); 节点 SSH 默认密码: <已设置>
+[1m[32m✅ 服务暴露方式: 当前为 MetalLB LoadBalancer 模式(SERVICE_EXPOSE_MODE=metallb, 生产默认)[0m
+  访问入口 = LoadBalancer VIP(ingress 经各自 LoadBalancer VIP)
+  ⚠ MetalLB 注意事项:
+               · METALLB_POOL 必须与节点同网段、不含网络/广播地址(.0/.255), 且地址空闲
+               · 地址池建议 >1 个地址, 否则新建 LoadBalancer 可能无 VIP 可分配(verify_metallb 会校验)
+               · 改池后需重跑 tools/k8s/sync-kubespray-config.sh 并重新 apply 池 CR 再验证
+               · 测试环境无空闲地址时可用 nodeport(SERVICE_EXPOSE_MODE=nodeport)
+  registry 入口: http://10.66.3.21:31148/ (NodePort, 默认; 与 SERVICE_EXPOSE_MODE 解耦)
+  下一步: 扩容用 --with-scale; 立即部署单个用 --steps gpu_operator,ceph(...)(自动带基座); 预启用写入配置用 --enable ...(下次全量生效); 验证用 --steps verify
+[36m→  收尾巡检: 全部 Pod 已成功运行[0m
+---------------------------------------------
+  ℹ 单组件安装模式(--steps): 只跑指定组件 + 其非基座依赖; 基座类(k8s_deploy/metallb/local_path/k8s_registry 等)按设计未纳入
+  ⚠ 本次未部署的组件(开关关闭, 打开即部署): chrony_pkgs(CHRONY_PKGS_ENABLED=false), k8s_workerbm(WORKER_PKGS_ENABLED=false), kube_vip(KUBE_VIP_ENABLED=false), node_pkgs(NODE_PKGS_ENABLED=false), ceph(CEPH_MODE=none), ceph_csi(CEPH_MODE=none), cephfs_mount(CEPHFS_MOUNT_ENABLED=false), nvidia_gpu_operator(NVIDIA_GPU_OPERATOR_ENABLED=false), hami(HAMI_ENABLED=<未设置>), netshoot(NETSHOOT_ENABLED=false), dev_lab(DEV_LAB_ENABLED=<未设置>)
+     ↳ 立即单跑: --steps <组件名>(如 --steps keycloak); 持久启用: --enable <组件名>
+  ⚠ 开关已开但本次未调度(如 --steps 精确模式/--skip/阶段过滤): gpu_operator, multus, rdma_shared_dev_plugin, cubestack_operator, model_images, node_pool
+  ○ 规划中未实现(伪代码占位, 打开开关也只有伪代码流程): harbor, keycloak, kueue, kubevirt, lustre_csi
+=============================================

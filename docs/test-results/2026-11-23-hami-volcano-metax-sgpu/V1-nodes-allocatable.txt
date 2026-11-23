@@ -1,0 +1,6 @@
+===== V1 nodes allocatable (repeat) =====
+cubestack-k8s-master01 gpu=0 sgpu=0 vcore=0 vmemory=0
+cubestack-k8s-master02 gpu=0 sgpu=0 vcore=0 vmemory=0
+cubestack-k8s-master03 gpu=0 sgpu=0 vcore=0 vmemory=0
+cubestack-k8s-worker01 gpu=0 sgpu=128 vcore=0 vmemory=0
+cubestack-k8s-worker02 gpu=0 sgpu=128 vcore=0 vmemory=0

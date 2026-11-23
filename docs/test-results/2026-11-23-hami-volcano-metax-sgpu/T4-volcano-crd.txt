@@ -1,0 +1,4 @@
+===== T4 job CRD =====
+NAME                    CREATED AT
+jobs.batch.volcano.sh   2026-11-23T11:45:28Z
+crd_count=12

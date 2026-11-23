@@ -1,0 +1,14 @@
+===== T6 volcano uninstall =====
+VOLCANO_UNINSTALL_RC=0
+[90m[DEBUG] 自动检测 release.env: /opt/cubestack-installer/deployments/offline-files/release.env → release=2.1-SNAPSHOT-20261121-78a83fb[0m
+[90m[DEBUG] release 模式生效: 2.1-SNAPSHOT-20261121-78a83fb(OFFLINE_FILES_ROOT=/opt/cubestack-installer/deployments/offline-files)[0m
+[90m[DEBUG] 发现版本树私有模块: /opt/cubestack-installer/deployments/modules[0m
+[90m[DEBUG] 版本档案生效: /opt/cubestack-installer/deployments/config/profiles/v2.32.0.profile[0m
+[90m[DEBUG] 自动检测宿主机物理 IP: 10.66.3.212[0m
+[90m[DEBUG] API 入口=第一个 master: 10.66.3.21[0m
+[90m[DEBUG] REGISTRY_SERVICE_TYPE 留空, 默认 nodeport(与 SERVICE_EXPOSE_MODE=metallb 解耦)[0m
+[90m[DEBUG] REGISTRY_IP 留空, registry=nodeport → 首个 master IP 10.66.3.21[0m
+[36m→    volcano: helm uninstall volcano(ns=volcano-system)...[0m
+[36m→    清理残留(webhook/CRD/命名空间)...[0m
+Warning: Permanently added '10.66.3.21' (ED25519) to the list of known hosts.
+[32m✅   Volcano 已卸载(volcano @ volcano-system)[0m

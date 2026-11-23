@@ -1,0 +1,10 @@
+===== T4 volcano pods/deploy/jobs =====
+NAME                                       READY   STATUS    RESTARTS   AGE     IP               NODE                     NOMINATED NODE   READINESS GATES
+pod/volcano-admission-7c94b778d6-c2dxc     1/1     Running   0          3h24m   10.233.105.205   cubestack-k8s-worker01   <none>           <none>
+pod/volcano-controllers-5fddc8f494-45jlf   1/1     Running   0          3h24m   10.233.105.203   cubestack-k8s-worker01   <none>           <none>
+pod/volcano-scheduler-66666b57-28h5z       1/1     Running   0          3h24m   10.233.119.31    cubestack-k8s-worker02   <none>           <none>
+
+NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS            IMAGES                                                                                 SELECTOR
+deployment.apps/volcano-admission     1/1     1            1           3h24m   admission             registry.cubestack.io:5000/mirrors/docker.io/volcanosh/vc-webhook-manager:v1.16.0      app=volcano-admission
+deployment.apps/volcano-controllers   1/1     1            1           3h24m   volcano-controllers   registry.cubestack.io:5000/mirrors/docker.io/volcanosh/vc-controller-manager:v1.16.0   app=volcano-controller
+deployment.apps/volcano-scheduler     1/1     1            1           3h24m   volcano-scheduler     registry.cubestack.io:5000/mirrors/docker.io/volcanosh/vc-scheduler:v1.16.0            app=volcano-scheduler

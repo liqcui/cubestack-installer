@@ -1,0 +1,19 @@
+===== T6 volcano reinstall state =====
+NAME: volcano
+LAST DEPLOYED: Mon Nov 23 23:21:46 2026
+NAMESPACE: volcano-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+Thank you for installing volcano.
+NAME                                   READY   STATUS      RESTARTS   AGE
+volcano-admission-7c94b778d6-g9xgs     1/1     Running     0          8s
+volcano-admission-init-sswkn           0/1     Completed   0          13s
+volcano-controllers-5fddc8f494-qrfwg   1/1     Running     0          8s
+volcano-scheduler-66666b57-hlwnz       1/1     Running     0          8s
+NAME                    CREATED AT
+jobs.batch.volcano.sh   2026-11-23T15:21:53Z
+NAME      PARENT
+default   root
+root      

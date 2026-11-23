@@ -1,0 +1,21 @@
+===== V5 create 8 x vcore=100 spread pods =====
+pod/hami-topo-0 created
+pod/hami-topo-1 created
+pod/hami-topo-2 created
+pod/hami-topo-3 created
+pod/hami-topo-4 created
+pod/hami-topo-5 created
+pod/hami-topo-6 created
+pod/hami-topo-7 created
+error: resource(s) were provided, but no name was specified
+NAME              READY   STATUS              RESTARTS   AGE   IP              NODE                     NOMINATED NODE   READINESS GATES
+hami-metax-sgpu   1/1     Running             0          48s   10.233.119.3    cubestack-k8s-worker02   <none>           <none>
+hami-metax-topo   1/1     Running             0          48s   10.233.119.36   cubestack-k8s-worker02   <none>           <none>
+hami-topo-0       0/1     ContainerCreating   0          0s    <none>          cubestack-k8s-worker02   <none>           <none>
+hami-topo-1       0/1     Pending             0          0s    <none>          <none>                   <none>           <none>
+hami-topo-2       0/1     Pending             0          0s    <none>          <none>                   <none>           <none>
+hami-topo-3       0/1     Pending             0          0s    <none>          <none>                   <none>           <none>
+hami-topo-4       0/1     Pending             0          0s    <none>          <none>                   <none>           <none>
+hami-topo-5       0/1     Pending             0          0s    <none>          <none>                   <none>           <none>
+hami-topo-6       0/1     Pending             0          0s    <none>          <none>                   <none>           <none>
+hami-topo-7       0/1     Pending             0          0s    <none>          <none>                   <none>           <none>

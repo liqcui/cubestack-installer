@@ -1,0 +1,6 @@
+===== T6 volcano cleanup state =====
+NAME	NAMESPACE	REVISION	UPDATED	STATUS	CHART	APP VERSION
+Error from server (NotFound): namespaces "volcano-system" not found
+volcano_crd_count=0
+NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+hami-scheduler   1/1     1            1           5h53m

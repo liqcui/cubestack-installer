@@ -1,0 +1,5 @@
+===== V3 describe topo FilteringSucceed =====
+  Normal   FilteringSucceed  2s (x2 over 5s)  hami-scheduler  find fit node(cubestack-k8s-worker02), 3 nodes not fit, 2 nodes fit(cubestack-k8s-worker01:700000.00,cubestack-k8s-worker02:600000.56)
+  Normal   BindingSucceed    2s               hami-scheduler  Successfully binding node [cubestack-k8s-worker02] to hami-demo/hami-metax-topo
+  Normal   AddedInterface    1s               multus          Add eth0 [10.233.119.36/32] from k8s-pod-network
+  Normal   Pulled            0s               kubelet         spec.containers{main}: Container image "registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64" already present on machine and can be accessed by the pod

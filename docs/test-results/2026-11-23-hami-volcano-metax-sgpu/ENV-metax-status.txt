@@ -1,0 +1,7 @@
+===== ENV metax operator status =====
+{
+  "name": "cluster-operator",
+  "version": null,
+  "phase": null,
+  "conditions": null
+}

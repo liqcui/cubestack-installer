@@ -1,0 +1,27 @@
+===== T6 hami reinstall =====
+HAMI_REINSTALL_RC=0
+[32m✅   [lws-system/deploy/lws-controller-manager] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cuberouter/deploy/cuberouter] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cuberouter/deploy/cuberouter-cloudnative-pg] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cuberouter/deploy/redis-operator] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/kube-prometheus-grafana] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/kube-prometheus-kube-prome-operator] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/kube-prometheus-kube-state-metrics] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/perses-operator-controller-manager] 已加 master nodeSelector + tolerations[0m
+[32m✅ CubeStack 平台组件 placement apply 完成[0m
+[32m✅ 平台组件 master placement 完成(NODE_POOL_ACTION=apply)[0m
+[32m✅ 模块 [platform_placement] 完成[0m
+[32m✅ registry 10.66.3.21:31148/v2/ 可达[0m
+[32m✅ 前置检查通过(server=v1.35.8, registry=registry.cubestack.io:5000)[0m
+[36m→  [1/4] 推送 HAMi 镜像 → registry.cubestack.io:5000/mirrors/** ...[0m
+[33m⚠    mirrors/registry.k8s.io/ingress-nginx/kube-webhook-certgen 的离线 tar 为单架构(digest sha256:499849e65b49c3dc213440a99764ff01f6d1031f518ad34fdd4a6ccb3622b9d1), 无法保留 chart digest 钉子 sha256:01038e7de14b78d702d2849c3aad72fd25903c4765af63cf16aa3398f5d5f2dd[0m
+[33m⚠    → certgen 引用降级为 tag: v1.6.9(镜像内容仍来自本次推送的同一 tar)[0m
+[32m✅   镜像就绪: 新推 0 个, 已在 registry 跳过 3 个[0m
+[36m→  [3/4] helm upgrade --install hami → kube-system(MetaX 模式, devicePlugin=false)...[0m
+[32m✅ HAMi(MetaX 模式)部署完成: hami-scheduler @ kube-system[0m
+[32m✅ 模块 [hami] 完成[0m
+[32m✅ 一键部署流程完成(配置: /opt/cubestack-installer/deployments/config/cluster.conf)[0m
+[1m[32m✅ 服务暴露方式: 当前为 MetalLB LoadBalancer 模式(SERVICE_EXPOSE_MODE=metallb, 生产默认)[0m
+  ⚠ MetalLB 注意事项:
+  ⚠ 本次未部署的组件(开关关闭, 打开即部署): chrony_pkgs(CHRONY_PKGS_ENABLED=false), k8s_workerbm(WORKER_PKGS_ENABLED=false), kube_vip(KUBE_VIP_ENABLED=false), node_pkgs(NODE_PKGS_ENABLED=false), ceph(CEPH_MODE=none), ceph_csi(CEPH_MODE=none), cephfs_mount(CEPHFS_MOUNT_ENABLED=false), nvidia_gpu_operator(NVIDIA_GPU_OPERATOR_ENABLED=false), volcano(VOLCANO_ENABLED=<未设置>), netshoot(NETSHOOT_ENABLED=false), dev_lab(DEV_LAB_ENABLED=<未设置>)
+  ⚠ 开关已开但本次未调度(如 --steps 精确模式/--skip/阶段过滤): gpu_operator, multus, rdma_shared_dev_plugin, cubestack_operator, model_images, node_pool

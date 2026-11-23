@@ -1,0 +1,7 @@
+===== V6 apply volcano-example-job.yaml =====
+job.batch.volcano.sh/volcano-sgpu-demo created
+NAME                STATUS    MINAVAILABLE   RUNNINGS   AGE
+volcano-sgpu-demo   Running   2              2          2m3s
+NAME                       READY   STATUS    RESTARTS   AGE    IP               NODE                     NOMINATED NODE   READINESS GATES
+volcano-sgpu-demo-sgpu-0   1/1     Running   0          2m3s   10.233.105.234   cubestack-k8s-worker01   <none>           <none>
+volcano-sgpu-demo-sgpu-1   1/1     Running   0          2m3s   10.233.105.231   cubestack-k8s-worker01   <none>           <none>

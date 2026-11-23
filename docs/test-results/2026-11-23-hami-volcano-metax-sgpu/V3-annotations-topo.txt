@@ -1,0 +1,20 @@
+===== V3 hami-metax-topo annotations =====
+{
+  "cni.projectcalico.org/containerID": "5ec4fbe9ae2e6895eec008e73ab789c52964e8f5907ca2f8e1f1aa75864c87be",
+  "cni.projectcalico.org/podIP": "10.233.119.36/32",
+  "cni.projectcalico.org/podIPs": "10.233.119.36/32",
+  "hami.io/bind-phase": "allocating",
+  "hami.io/bind-time": "1795446622",
+  "hami.io/metax-sgpu-devices-allocated": "GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb,Metax-SGPU,4096,100:;",
+  "hami.io/metax-sgpu-devices-to-allocate": "GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb,Metax-SGPU,4096,100:;",
+  "hami.io/node-scheduler-policy": "spread",
+  "hami.io/vgpu-node": "cubestack-k8s-worker02",
+  "hami.io/vgpu-time": "1795446622",
+  "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"k8s-pod-network\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.233.119.36\"\n    ],\n    \"mac\": \"66:3d:b1:a0:e1:48\",\n    \"default\": true,\n    \"dns\": {}\n}]",
+  "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{\"hami.io/node-scheduler-policy\":\"spread\",\"metax-tech.com/sgpu-topology-aware\":\"true\"},\"name\":\"hami-metax-topo\",\"namespace\":\"hami-demo\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"sleep 3600\"],\"image\":\"registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"main\",\"resources\":{\"limits\":{\"metax-tech.com/sgpu\":1,\"metax-tech.com/vcore\":100,\"metax-tech.com/vmemory\":4}}}]}}\n",
+  "metax-tech.com/gpu-allocated-status": "[{\"index\":0,\"name\":\"main\",\"sgpus\":[{\"uuid\":\"GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb\",\"bdf\":\"0000:e3:00.0\"}],\"status\":\"finished\"}]",
+  "metax-tech.com/gpu-devices-allocated": "[[{\"uuid\":\"GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb\",\"compute\":100,\"vRam\":4096}]]",
+  "metax-tech.com/predicate-time": "1795446622005830092",
+  "metax-tech.com/sgpu-qos-policy": "best-effort",
+  "metax-tech.com/sgpu-topology-aware": "true"
+}

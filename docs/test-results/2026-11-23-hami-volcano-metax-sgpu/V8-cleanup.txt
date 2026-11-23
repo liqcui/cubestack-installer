@@ -1,0 +1,5 @@
+===== V8 delete vcjobs + namespace =====
+job.batch.volcano.sh "volcano-sgpu-demo" deleted from hami-demo namespace
+job.batch.volcano.sh "volcano-mem-demo" deleted from hami-demo namespace
+namespace "hami-demo" deleted
+Error from server (NotFound): namespaces "hami-demo" not found

@@ -1,0 +1,4 @@
+===== ENV kubectl version =====
+Client Version: v1.35.8
+Kustomize Version: v5.7.1
+Server Version: v1.35.8

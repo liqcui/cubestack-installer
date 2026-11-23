@@ -1,0 +1,12 @@
+===== V5 8pods placement =====
+NAME              READY   STATUS    RESTARTS   AGE   IP               NODE                     NOMINATED NODE   READINESS GATES
+hami-metax-sgpu   1/1     Running   0          71s   10.233.119.3     cubestack-k8s-worker02   <none>           <none>
+hami-metax-topo   1/1     Running   0          71s   10.233.119.36    cubestack-k8s-worker02   <none>           <none>
+hami-topo-0       1/1     Running   0          23s   10.233.119.33    cubestack-k8s-worker02   <none>           <none>
+hami-topo-1       1/1     Running   0          23s   10.233.119.1     cubestack-k8s-worker02   <none>           <none>
+hami-topo-2       1/1     Running   0          23s   10.233.119.38    cubestack-k8s-worker02   <none>           <none>
+hami-topo-3       1/1     Running   0          23s   10.233.119.2     cubestack-k8s-worker02   <none>           <none>
+hami-topo-4       1/1     Running   0          23s   10.233.119.41    cubestack-k8s-worker02   <none>           <none>
+hami-topo-5       1/1     Running   0          23s   10.233.119.39    cubestack-k8s-worker02   <none>           <none>
+hami-topo-6       1/1     Running   0          23s   10.233.105.232   cubestack-k8s-worker01   <none>           <none>
+hami-topo-7       1/1     Running   0          23s   10.233.105.233   cubestack-k8s-worker01   <none>           <none>

@@ -1,0 +1,92 @@
+===== V5 cubestack-k8s-worker02 node-gpu-devices =====
+[
+  {
+    "uuid": "GPU-d89b059f-76b8-3cd2-a835-e719aa08a466",
+    "bdf": "0000:23:00.0",
+    "model": "native",
+    "totalDevCount": 16,
+    "totalCompute": 100,
+    "totalVRam": 65536,
+    "numa": 0,
+    "healthy": true,
+    "linkZone": 1
+  },
+  {
+    "uuid": "GPU-0e5278f0-7e5a-5e06-e2e6-4890f2be92ba",
+    "bdf": "0000:26:00.0",
+    "model": "native",
+    "totalDevCount": 16,
+    "totalCompute": 100,
+    "totalVRam": 65536,
+    "numa": 0,
+    "healthy": true,
+    "linkZone": 1
+  },
+  {
+    "uuid": "GPU-15d1e8bd-e69a-3eef-573b-78ef9afe3209",
+    "bdf": "0000:63:00.0",
+    "model": "native",
+    "totalDevCount": 16,
+    "totalCompute": 100,
+    "totalVRam": 65536,
+    "numa": 2,
+    "healthy": true,
+    "linkZone": 1
+  },
+  {
+    "uuid": "GPU-49927f7f-3a6c-8baa-53a6-39391ed4852e",
+    "bdf": "0000:66:00.0",
+    "model": "native",
+    "totalDevCount": 16,
+    "totalCompute": 100,
+    "totalVRam": 65536,
+    "numa": 2,
+    "healthy": true,
+    "linkZone": 1
+  },
+  {
+    "uuid": "GPU-a769be12-de57-a9a8-9133-b226120173b8",
+    "bdf": "0000:a3:00.0",
+    "model": "native",
+    "totalDevCount": 16,
+    "totalCompute": 100,
+    "totalVRam": 65536,
+    "numa": 4,
+    "healthy": true,
+    "linkZone": 1
+  },
+  {
+    "uuid": "GPU-963a8bc8-9f6f-178b-8a1e-85181989c185",
+    "bdf": "0000:a4:00.0",
+    "model": "native",
+    "totalDevCount": 16,
+    "totalCompute": 100,
+    "totalVRam": 65536,
+    "numa": 4,
+    "healthy": true,
+    "linkZone": 1
+  },
+  {
+    "uuid": "GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb",
+    "bdf": "0000:e3:00.0",
+    "model": "native",
+    "totalDevCount": 16,
+    "totalCompute": 100,
+    "totalVRam": 65536,
+    "numa": 6,
+    "healthy": true,
+    "linkZone": 1
+  },
+  {
+    "uuid": "GPU-43110603-2a5b-1de0-9d7b-ba5dae750f20",
+    "bdf": "0000:e4:00.0",
+    "model": "sgpu",
+    "totalDevCount": 16,
+    "totalCompute": 100,
+    "totalVRam": 65536,
+    "numa": 6,
+    "healthy": true,
+    "qosPolicy": "best-effort",
+    "linkZone": 1
+  }
+]

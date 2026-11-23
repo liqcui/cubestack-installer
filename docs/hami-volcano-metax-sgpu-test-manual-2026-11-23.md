@@ -3,7 +3,7 @@
 > 依据：`liqcui/cubestack-installer@volcano` → `docs/hami.md`、`docs/volcano.md`、`docs/*demo*.yaml`（文档日期 2026-11-23）
 > 用途：把两份部署指南落成一份可执行的实测记录。**本版已用 2026-11-23 23:06–23:25 在容器 `cubestack-install-c` 的真实执行结果回填全部待补项**；原手册 §1.1 的 22:17 原始拓扑数据原样保留。
 > 执行环境：容器 `cubestack-install-c`（镜像 `sha-baa5dc3`），仓库 `/opt/cubestack-installer`，release `2.1-SNAPSHOT-20261121-78a83fb`；集群 5 节点，worker01/02 各 8× MetaX C550。
-> 原始日志：容器 `/root/hv-test-20261123/`，宿主 `/home/ubuntu/hv-test-20261123/`（93 个文件，约 520 KB）。
+> 原始日志：容器 `/root/hv-test-20261123/`，宿主 `/home/ubuntu/hv-test-20261123/`（93 个文件，约 520 KB）；其中 87 个日志已归档到仓库 `docs/test-results/2026-11-23-hami-volcano-metax-sgpu/`。
 
 约定：
 - ✅ = 本次实测通过；❌ = 本次实测失败；⚠️ = 待办 / 风险 / 需 vendor 确认项。
@@ -1156,8 +1156,9 @@ kubectl -n metax-operator delete pod -l app=metax-gpu-device              # 【�
 
 ## 8. 实测原始输出汇总
 
-**完整原始日志**（共 93 个文件，约 520 KB）：
+**完整原始日志**（共 93 个文件，约 520 KB；其中 87 个日志已归档到仓库）：
 
+- 仓库归档：`docs/test-results/2026-11-23-hami-volcano-metax-sgpu/`
 - 容器 c：`/root/hv-test-20261123/`
 - 宿主：`/home/ubuntu/hv-test-20261123/`
 
@@ -1410,8 +1411,9 @@ verify_hami RC=0
 | `docs/volcano-example-job.yaml` | Volcano Job 示例 |
 | `docs/volcano-mem-demo.yaml` | Volcano Job 真实消费 demo |
 | `24_verify_hami.sh` / `25_verify_volcano.sh` | 自动验证脚本（见 §2 T3 / T5） |
-| `/home/ubuntu/hv-test-20261123/` | 本次实测原始日志（93 文件） |
-| `/root/hv-test-20261123/`（容器 c） | 本次实测原始日志（容器内副本） |
+| `docs/test-results/2026-11-23-hami-volcano-metax-sgpu/` | 本次实测 87 个原始日志（仓库归档） |
+| `/home/ubuntu/hv-test-20261123/` | 本次实测完整结果包（93 文件：日志 + 文档 + YAML 副本） |
+| `/root/hv-test-20261123/`（容器 c） | 本次实测完整结果包（容器内副本） |
 
 本工作区配套文档：
 

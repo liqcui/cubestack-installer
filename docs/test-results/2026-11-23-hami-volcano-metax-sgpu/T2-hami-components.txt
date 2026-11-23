@@ -1,0 +1,5 @@
+===== T2 hami deploy/cm/webhook =====
+NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+hami-scheduler   1/1     1            1           5h42m
+NAME           WEBHOOKS   AGE
+hami-webhook   1          5h42m

@@ -1,0 +1,19 @@
+===== T1 metax-device-config =====
+apiVersion: v1
+data:
+  cluster-config: |
+    mode: "sgpu"
+    sgpuHybrid: null
+    shareNums: 4
+    deviceAllocationStrategy: "native"
+  version: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"cluster-config":"mode: \"sgpu\"\nsgpuHybrid: null\nshareNums: 4\ndeviceAllocationStrategy: \"native\"\n","version":"v1"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"metax-device-config","namespace":"metax-operator"}}
+  creationTimestamp: "2026-11-23T08:55:51Z"
+  name: metax-device-config
+  namespace: metax-operator
+  resourceVersion: "64788"
+  uid: 81013500-2432-4259-b41a-8d2bb888fad8

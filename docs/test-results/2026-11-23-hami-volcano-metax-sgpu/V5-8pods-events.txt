@@ -1,0 +1,9 @@
+===== V5 FilteringSucceed events (8pods) =====
+hami-topo-0:   Normal  FilteringSucceed  24s   hami-scheduler  find fit node(cubestack-k8s-worker02), 3 nodes not fit, 2 nodes fit(cubestack-k8s-worker01:700000.00,cubestack-k8s-worker02:500001.94)
+hami-topo-1:   Normal  FilteringSucceed  24s   hami-scheduler  find fit node(cubestack-k8s-worker02), 3 nodes not fit, 2 nodes fit(cubestack-k8s-worker01:700000.00,cubestack-k8s-worker02:400003.38)
+hami-topo-2:   Normal   FilteringSucceed  23s               hami-scheduler  find fit node(cubestack-k8s-worker02), 3 nodes not fit, 2 nodes fit(cubestack-k8s-worker01:700000.00,cubestack-k8s-worker02:300004.75)
+hami-topo-3:   Normal  FilteringSucceed  22s   hami-scheduler  find fit node(cubestack-k8s-worker02), 3 nodes not fit, 2 nodes fit(cubestack-k8s-worker01:700000.00,cubestack-k8s-worker02:200006.17)
+hami-topo-4:   Normal   FilteringSucceed  20s   hami-scheduler  find fit node(cubestack-k8s-worker02), 3 nodes not fit, 2 nodes fit(cubestack-k8s-worker01:700000.00,cubestack-k8s-worker02:100007.58)
+hami-topo-5:   Normal  FilteringSucceed  19s   hami-scheduler  find fit node(cubestack-k8s-worker02), 3 nodes not fit, 2 nodes fit(cubestack-k8s-worker01:700000.00,cubestack-k8s-worker02:8.98)
+hami-topo-6:   Normal  FilteringSucceed  18s   hami-scheduler  find fit node(cubestack-k8s-worker01), 4 nodes not fit, 1 nodes fit(cubestack-k8s-worker01:700000.00)
+hami-topo-7:   Normal   FilteringSucceed  8s (x2 over 16s)  hami-scheduler  find fit node(cubestack-k8s-worker01), 4 nodes not fit, 1 nodes fit(cubestack-k8s-worker01:600001.38)

@@ -1,0 +1,10 @@
+===== T2 helm status hami =====
+NAME: hami
+LAST DEPLOYED: Mon Nov 23 17:27:00 2026
+NAMESPACE: kube-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+** Please be patient while the chart is being deployed **
+Resource name: nvidia.com/gpu

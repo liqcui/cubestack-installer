@@ -1,0 +1,31 @@
+===== pre-existing hami-demo (from previous verification) =====
+NAME                       READY   STATUS      RESTARTS      AGE     IP               NODE                     NOMINATED NODE   READINESS GATES
+hami-sgpu-demo-0           1/1     Running     5 (39m ago)   5h39m   10.233.119.57    cubestack-k8s-worker02   <none>           <none>
+hami-share-0               1/1     Running     5 (37m ago)   5h38m   10.233.105.252   cubestack-k8s-worker01   <none>           <none>
+hami-share-1               1/1     Running     5 (38m ago)   5h38m   10.233.105.245   cubestack-k8s-worker01   <none>           <none>
+hami-share-10              1/1     Running     5 (36m ago)   5h36m   10.233.105.254   cubestack-k8s-worker01   <none>           <none>
+hami-share-11              1/1     Running     5 (36m ago)   5h36m   10.233.105.229   cubestack-k8s-worker01   <none>           <none>
+hami-share-12              1/1     Running     5 (36m ago)   5h36m   10.233.105.255   cubestack-k8s-worker01   <none>           <none>
+hami-share-13              1/1     Running     5 (36m ago)   5h36m   10.233.105.202   cubestack-k8s-worker01   <none>           <none>
+hami-share-14              1/1     Running     5 (36m ago)   5h36m   10.233.105.198   cubestack-k8s-worker01   <none>           <none>
+hami-share-15              1/1     Running     5 (36m ago)   5h36m   10.233.105.211   cubestack-k8s-worker01   <none>           <none>
+hami-share-2               1/1     Running     5 (37m ago)   5h38m   10.233.105.249   cubestack-k8s-worker01   <none>           <none>
+hami-share-3               1/1     Running     5 (38m ago)   5h38m   10.233.105.246   cubestack-k8s-worker01   <none>           <none>
+hami-share-4               1/1     Running     5 (37m ago)   5h38m   10.233.105.250   cubestack-k8s-worker01   <none>           <none>
+hami-share-5               1/1     Running     5 (37m ago)   5h38m   10.233.105.247   cubestack-k8s-worker01   <none>           <none>
+hami-share-6               1/1     Running     5 (37m ago)   5h38m   10.233.105.251   cubestack-k8s-worker01   <none>           <none>
+hami-share-7               1/1     Running     5 (37m ago)   5h38m   10.233.105.248   cubestack-k8s-worker01   <none>           <none>
+hami-share-8               1/1     Running     5 (36m ago)   5h36m   10.233.105.253   cubestack-k8s-worker01   <none>           <none>
+hami-share-9               1/1     Running     5 (36m ago)   5h36m   10.233.105.200   cubestack-k8s-worker01   <none>           <none>
+hami-topo-0                1/1     Running     5 (38m ago)   5h38m   10.233.119.58    cubestack-k8s-worker02   <none>           <none>
+hami-topo-1                1/1     Running     5 (38m ago)   5h38m   10.233.119.62    cubestack-k8s-worker02   <none>           <none>
+hami-topo-2                1/1     Running     5 (38m ago)   5h38m   10.233.119.59    cubestack-k8s-worker02   <none>           <none>
+hami-topo-3                1/1     Running     5 (37m ago)   5h38m   10.233.119.11    cubestack-k8s-worker02   <none>           <none>
+hami-topo-4                1/1     Running     5 (38m ago)   5h38m   10.233.119.60    cubestack-k8s-worker02   <none>           <none>
+hami-topo-5                1/1     Running     5 (37m ago)   5h38m   10.233.119.63    cubestack-k8s-worker02   <none>           <none>
+hami-topo-6                1/1     Running     5 (38m ago)   5h38m   10.233.119.61    cubestack-k8s-worker02   <none>           <none>
+hami-topo-7                1/1     Running     5 (38m ago)   5h38m   10.233.105.244   cubestack-k8s-worker01   <none>           <none>
+volcano-sgpu-demo-sgpu-0   0/1     Completed   0             3h21m   10.233.105.237   cubestack-k8s-worker01   <none>           <none>
+volcano-sgpu-demo-sgpu-1   0/1     Completed   0             3h21m   10.233.105.222   cubestack-k8s-worker01   <none>           <none>
+namespace "hami-demo" deleted
+Error from server (NotFound): namespaces "hami-demo" not found

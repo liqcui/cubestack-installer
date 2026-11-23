@@ -1,0 +1,14 @@
+===== T0 metax-operator pods =====
+NAME                                                 READY   STATUS    RESTARTS   AGE     IP               NODE                     NOMINATED NODE   READINESS GATES
+metax-container-runtime-trz7m                        1/1     Running   0          6h11m   10.233.105.240   cubestack-k8s-worker01   <none>           <none>
+metax-container-runtime-vdhgb                        1/1     Running   0          6h11m   10.233.119.44    cubestack-k8s-worker02   <none>           <none>
+metax-gpu-device-j68fb                               1/1     Running   0          5h42m   10.233.105.243   cubestack-k8s-worker01   <none>           <none>
+metax-gpu-device-xhjlh                               1/1     Running   0          5h42m   10.233.119.53    cubestack-k8s-worker02   <none>           <none>
+metax-gpu-label-4bl2j                                1/1     Running   0          6h11m   10.233.119.43    cubestack-k8s-worker02   <none>           <none>
+metax-gpu-label-95rct                                1/1     Running   0          6h11m   10.233.116.140   cubestack-k8s-master02   <none>           <none>
+metax-gpu-label-bxc2r                                1/1     Running   0          6h11m   10.233.117.207   cubestack-k8s-master03   <none>           <none>
+metax-gpu-label-tgjgj                                1/1     Running   0          6h11m   10.233.105.239   cubestack-k8s-worker01   <none>           <none>
+metax-gpu-label-tzt2r                                1/1     Running   0          6h11m   10.233.77.136    cubestack-k8s-master01   <none>           <none>
+metax-gpu-operator-metax-operator-7d6dffb99b-q6x8l   1/1     Running   0          6h11m   10.233.116.139   cubestack-k8s-master02   <none>           <none>
+metax-maca-698gs                                     1/1     Running   0          6h11m   10.233.119.45    cubestack-k8s-worker02   <none>           <none>
+metax-maca-7qt74                                     1/1     Running   0          6h11m   10.233.105.241   cubestack-k8s-worker01   <none>           <none>

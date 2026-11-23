@@ -1,0 +1,10 @@
+===== V5 device config topology flag =====
+    metax:
+      resourceCountName: metax-tech.com/gpu
+      resourceVCountName: metax-tech.com/sgpu
+      resourceVMemoryName: metax-tech.com/vmemory
+      resourceVCoreName: metax-tech.com/vcore
+      sgpuTopologyAware: true
+    enflame:
+      resourceNameGCU: enflame.com/gcu
+      resourceNameDRSGCU: enflame.com/drs-gcu

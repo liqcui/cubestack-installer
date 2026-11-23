@@ -1,0 +1,13 @@
+===== V7 apply hami-mem-demo + volcano-mem-demo =====
+pod/hami-mem-demo created
+job.batch.volcano.sh/volcano-mem-demo created
+pod/hami-mem-demo condition met
+NAME               STATUS    MINAVAILABLE   RUNNINGS   AGE
+volcano-mem-demo   Running   1              1          3m6s
+NAME                       READY   STATUS    RESTARTS   AGE     IP               NODE                     NOMINATED NODE   READINESS GATES
+hami-mem-demo              1/1     Running   0          3m6s    10.233.119.34    cubestack-k8s-worker02   <none>           <none>
+hami-metax-sgpu            1/1     Running   0          7m29s   10.233.119.3     cubestack-k8s-worker02   <none>           <none>
+hami-metax-topo            1/1     Running   0          7m29s   10.233.119.36    cubestack-k8s-worker02   <none>           <none>
+volcano-mem-demo-mem-0     1/1     Running   0          3m6s    10.233.119.40    cubestack-k8s-worker02   <none>           <none>
+volcano-sgpu-demo-sgpu-0   1/1     Running   0          5m21s   10.233.105.234   cubestack-k8s-worker01   <none>           <none>
+volcano-sgpu-demo-sgpu-1   1/1     Running   0          5m21s   10.233.105.231   cubestack-k8s-worker01   <none>           <none>

@@ -1,0 +1,27 @@
+===== T6 volcano reinstall =====
+VOLCANO_REINSTALL_RC=0
+[32m✅   [ai-gateway-system/deploy/ai-gateway-controller] 已加 master nodeSelector + tolerations[0m
+[32m✅   [lws-system/deploy/lws-controller-manager] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cuberouter/deploy/cuberouter] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cuberouter/deploy/cuberouter-cloudnative-pg] 已加 master nodeSelector + tolerations[0m
+[32m✅   [cuberouter/deploy/redis-operator] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/kube-prometheus-grafana] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/kube-prometheus-kube-prome-operator] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/kube-prometheus-kube-state-metrics] 已加 master nodeSelector + tolerations[0m
+[32m✅   [monitoring/deploy/perses-operator-controller-manager] 已加 master nodeSelector + tolerations[0m
+[32m✅ CubeStack 平台组件 placement apply 完成[0m
+[32m✅ 平台组件 master placement 完成(NODE_POOL_ACTION=apply)[0m
+[32m✅ 模块 [platform_placement] 完成[0m
+[32m✅ HAMi scheduler 在位(kube-system/hami-scheduler)[0m
+[32m✅ registry 10.66.3.21:31148/v2/ 可达[0m
+[32m✅ 前置检查通过(registry=registry.cubestack.io:5000, ns=volcano-system)[0m
+[36m→  [1/4] 推送 Volcano 镜像 → registry.cubestack.io:5000/mirrors/** ...[0m
+[32m✅   镜像就绪: 新推 0 个, 已在 registry 跳过 3 个[0m
+[36m→  [3/4] helm upgrade --install volcano → volcano-system(Volcano Job 由 hami-scheduler 调度 GPU Pod)...[0m
+[32m✅ Volcano 部署完成: volcano-controllers/scheduler/admission @ volcano-system[0m
+[32m✅ 模块 [volcano] 完成[0m
+[32m✅ 一键部署流程完成(配置: /opt/cubestack-installer/deployments/config/cluster.conf)[0m
+[1m[32m✅ 服务暴露方式: 当前为 MetalLB LoadBalancer 模式(SERVICE_EXPOSE_MODE=metallb, 生产默认)[0m
+  ⚠ MetalLB 注意事项:
+  ⚠ 本次未部署的组件(开关关闭, 打开即部署): chrony_pkgs(CHRONY_PKGS_ENABLED=false), k8s_workerbm(WORKER_PKGS_ENABLED=false), kube_vip(KUBE_VIP_ENABLED=false), node_pkgs(NODE_PKGS_ENABLED=false), ceph(CEPH_MODE=none), ceph_csi(CEPH_MODE=none), cephfs_mount(CEPHFS_MOUNT_ENABLED=false), nvidia_gpu_operator(NVIDIA_GPU_OPERATOR_ENABLED=false), hami(HAMI_ENABLED=<未设置>), netshoot(NETSHOOT_ENABLED=false), dev_lab(DEV_LAB_ENABLED=<未设置>)
+  ⚠ 开关已开但本次未调度(如 --steps 精确模式/--skip/阶段过滤): gpu_operator, multus, rdma_shared_dev_plugin, cubestack_operator, model_images, node_pool

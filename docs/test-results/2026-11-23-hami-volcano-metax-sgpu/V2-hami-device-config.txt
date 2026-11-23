@@ -1,0 +1,14 @@
+===== V2 hami-scheduler device config metax =====
+    metax:
+      resourceCountName: metax-tech.com/gpu
+      resourceVCountName: metax-tech.com/sgpu
+      resourceVMemoryName: metax-tech.com/vmemory
+      resourceVCoreName: metax-tech.com/vcore
+      sgpuTopologyAware: true
+    enflame:
+      resourceNameGCU: enflame.com/gcu
+      resourceNameDRSGCU: enflame.com/drs-gcu
+      resourceNameGCUMemory: enflame.com/gcu-memory
+      resourceNameGCUCore: enflame.com/gcu-core
+    mthreads:
+      resourceCountName: mthreads.com/vgpu

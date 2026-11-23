@@ -1,0 +1,2 @@
+===== V7 hami-mem-demo log =====
+allocated_bytes 2147483648

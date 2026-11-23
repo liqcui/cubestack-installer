@@ -1,0 +1,9 @@
+===== T6 hami cleanup state =====
+Error from server (NotFound): deployments.apps "hami-scheduler" not found
+Error from server (NotFound): mutatingwebhookconfigurations.admissionregistration.k8s.io "hami-webhook" not found
+Error from server (NotFound): configmaps "hami-scheduler-device" not found
+NAME                                   READY   STATUS      RESTARTS   AGE
+volcano-admission-7c94b778d6-g9xgs     1/1     Running     0          19s
+volcano-admission-init-sswkn           0/1     Completed   0          24s
+volcano-controllers-5fddc8f494-qrfwg   1/1     Running     0          19s
+volcano-scheduler-66666b57-hlwnz       1/1     Running     0          19s

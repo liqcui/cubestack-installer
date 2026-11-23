@@ -1,0 +1,4 @@
+===== ENV cluster.conf relevant =====
+SSH_USER="${SSH_USER:-ubuntu}"
+SERVICE_EXPOSE_MODE="${SERVICE_EXPOSE_MODE:-metallb}"
+CEPH_MODE="${CEPH_MODE:-none}"

@@ -1,0 +1,41 @@
+===== V2 hami-scheduler extender log tail =====
+I1123 15:09:42.856173       1 scheduler.go:1467] nodeScores_len= 2
+I1123 15:09:42.856246       1 scheduler.go:1470] "Scheduling pod to node" podNamespace="default" podName="volcano-verify-gpu-main-0" nodeID="cubestack-k8s-worker02" devices={"Metax-SGPU":[[{"Idx":6,"UUID":"GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb","Type":"Metax-SGPU","Usedmem":4096,"Usedcores":25,"Slots":0,"CustomInfo":{"LinkZone":1,"Model":"native","Pod.Annotations":{"metax-tech.com/sgpu-qos-policy":"best-effort","metax-tech.com/sgpu-topology-aware":"true","scheduling.k8s.io/group-name":"volcano-verify-gpu-53017d7f-1374-43dc-8b92-f763c439df6a","volcano.sh/job-name":"volcano-verify-gpu","volcano.sh/job-retry-count":"0","volcano.sh/job-version":"0","volcano.sh/queue-name":"default","volcano.sh/task-index":"0","volcano.sh/task-spec":"main","volcano.sh/template-uid":"volcano-verify-gpu-main"},"QosPolicy":""}}]]}
+I1123 15:09:42.856274       1 device.go:214] "annos" input={"hami.io/vgpu-node":"cubestack-k8s-worker02","hami.io/vgpu-time":"1795446582"}
+I1123 15:09:42.856287       1 device.go:317] annoinput map[hami.io/vgpu-node:cubestack-k8s-worker02 hami.io/vgpu-time:1795446582]
+I1123 15:09:42.856311       1 device.go:220] "annos" input={"hami.io/vgpu-node":"cubestack-k8s-worker02","hami.io/vgpu-time":"1795446582"}
+I1123 15:09:42.856327       1 devices.go:484] Encoded container Devices: GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb,Metax-SGPU,4096,25:
+I1123 15:09:42.856336       1 devices.go:509] Encoded pod single devices GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb,Metax-SGPU,4096,25:;
+I1123 15:09:42.856344       1 sdevice.go:150] pod add annotation key [hami.io/metax-sgpu-devices-to-allocate, hami.io/metax-sgpu-devices-allocated], values is [GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb,Metax-SGPU,4096,25:;]
+I1123 15:09:42.856357       1 sdevice.go:155] metaxPodDevice allocated info: 
+PodMetaxSDevice:
+  container[0]:
+    SDevice[GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb]: Compute=25, VRam=4096
+I1123 15:09:42.856377       1 qos.go:66] *metax.JitteryQosCache: device[GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb] add to cache, expected qos [best-effort]
+I1123 15:09:42.856387       1 sdevice.go:563] device[GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb] add to cache, expectedQos[best-effort] not equal to currentQos[]
+I1123 15:09:42.856441       1 pods.go:70] "Pod added" pod="default/volcano-verify-gpu-main-0" nodeID="cubestack-k8s-worker02" devices={"Metax-SGPU":[[{"Idx":0,"UUID":"GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb","Type":"Metax-SGPU","Usedmem":4096,"Usedcores":25,"Slots":1,"CustomInfo":null}]]}
+I1123 15:09:42.856549       1 quota.go:134] add usage val= metax-tech.com/vmemory : &{0 0 false}
+I1123 15:09:42.856562       1 quota.go:134] add usage val= metax-tech.com/vcore : &{0 0 false}
+I1123 15:09:42.856571       1 quota.go:134] add usage val= metax-tech.com/vmemory : &{8192 0 false}
+I1123 15:09:42.856580       1 quota.go:134] add usage val= metax-tech.com/vcore : &{50 0 false}
+I1123 15:09:42.867205       1 event.go:395] "Event occurred" object="default/volcano-verify-gpu-main-0" fieldPath="" kind="Pod" apiVersion="v1" type="Normal" reason="FilteringSucceed" message="find fit node(cubestack-k8s-worker02), 3 nodes not fit, 2 nodes fit(cubestack-k8s-worker01:0.00,cubestack-k8s-worker02:0.47)"
+I1123 15:09:42.868841       1 scheduler.go:1235] "Attempting to bind pod to node" pod="volcano-verify-gpu-main-0" namespace="default" node="cubestack-k8s-worker02"
+I1123 15:09:42.868905       1 scheduler.go:1263] "Trying to get the target node for pod" pod="volcano-verify-gpu-main-0" namespace="default" node="cubestack-k8s-worker02"
+I1123 15:09:42.868946       1 device.go:326] Start to count AMD devices for container main
+I1123 15:09:42.868967       1 device.go:178] Start to count hcu devices for container main
+I1123 15:09:42.868980       1 device.go:276] Start to count mlu devices for container main
+I1123 15:09:42.868993       1 device.go:281] idx= metax-tech.com/sgpu val= {{1 0} {<nil>} 1 DecimalSI} {{0 0} {<nil>}  }
+I1123 15:09:42.869016       1 device.go:281] idx= metax-tech.com/vcore val= {{25 0} {<nil>} 25 DecimalSI} {{0 0} {<nil>}  }
+I1123 15:09:42.869025       1 device.go:281] idx= metax-tech.com/vmemory val= {{4 0} {<nil>} 4 DecimalSI} {{0 0} {<nil>}  }
+I1123 15:09:42.869050       1 sdevice.go:269] container<main> request<count:1, mem:4096, memPercent:0, core:25>
+I1123 15:09:42.887764       1 nodelock.go:184] "Node lock set" node="cubestack-k8s-worker02" podName="volcano-verify-gpu-main-0"
+I1123 15:09:42.900801       1 scheduler.go:1327] "Successfully bound pod to node" pod="volcano-verify-gpu-main-0" namespace="default" node="cubestack-k8s-worker02"
+I1123 15:09:42.900944       1 event.go:395] "Event occurred" object="default/volcano-verify-gpu-main-0" fieldPath="" kind="Pod" apiVersion="v1" type="Normal" reason="BindingSucceed" message="Successfully binding node [cubestack-k8s-worker02] to default/volcano-verify-gpu-main-0"
+I1123 15:09:43.057511       1 request.go:685] "Waited before sending request" delay="156.487885ms" reason="client-side throttling, not priority and fairness" verb="POST" URL="https://10.233.0.1:443/api/v1/namespaces/default/events"
+I1123 15:09:51.075130       1 device.go:313] "checking device health for node" nodeName="cubestack-k8s-master01" deviceType="NVIDIA" currentDevices=0 reportedDevices=0
+I1123 15:09:51.075211       1 device.go:313] "checking device health for node" nodeName="cubestack-k8s-master02" deviceType="NVIDIA" currentDevices=0 reportedDevices=0
+I1123 15:09:51.075273       1 device.go:313] "checking device health for node" nodeName="cubestack-k8s-master03" deviceType="NVIDIA" currentDevices=0 reportedDevices=0
+I1123 15:09:51.076042       1 device.go:313] "checking device health for node" nodeName="cubestack-k8s-worker01" deviceType="NVIDIA" currentDevices=0 reportedDevices=0
+I1123 15:09:51.076442       1 qos.go:48] *metax.JitteryQosCache: device[GPU-f411dc02-87bf-b501-bc7b-8496f179b7cb] qos changed to expected [best-effort], delete data
+I1123 15:09:51.076457       1 qos.go:57] *metax.JitteryQosCache: sync done, current cache: map[]
+I1123 15:09:51.076708       1 device.go:313] "checking device health for node" nodeName="cubestack-k8s-worker02" deviceType="NVIDIA" currentDevices=0 reportedDevices=0

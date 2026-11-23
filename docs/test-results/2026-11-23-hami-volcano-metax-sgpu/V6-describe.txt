@@ -1,0 +1,16 @@
+===== V6 describe vcjob (key fields) =====
+Name:         volcano-sgpu-demo
+Namespace:    hami-demo
+  Queue:           default
+  Scheduler Name:  hami-scheduler
+    Name:           sgpu
+          Name:               main
+        Scheduler Name:                hami-scheduler
+    Status:                Pending
+    Status:                Running
+  Running:                 2
+  State:
+    Phase:                 Running
+        Running:  2
+Events:
+  Warning  PodGroupPending  119s (x6 over 119s)  vc-controller-manager  PodGroup hami-demo:volcano-sgpu-demo unschedulable, reason: 1/1 tasks in gang unschedulable: pod group is not ready, 1 Bound, 2 minAvailable
