@@ -224,6 +224,13 @@ spec:
 - 观察结果: `kubectl describe pod` 的 `FilteringSucceed` 事件会打印节点评分;
   HAMi extender 日志会打印分配到的 GPU UUID。
 
+> **Volcano 集成**: 见 [docs/volcano.md](volcano.md)。Volcano 负责 Job/Queue 生命周期,
+> Volcano Job 的 `spec.schedulerName`/task template 设为 `hami-scheduler`,由 HAMi 完成
+> MetaX vGPU 分配;不需要 `volcano-hami` 或 `volcano-vgpu-device-plugin`。
+>
+> **完整示例文件**: [docs/hami-example-pods.yaml](hami-example-pods.yaml)
+> (sGPU 共享 Pod + 拓扑感知 Pod, 可直接 `kubectl apply`)。
+
 ## 6. 验证口径(`--steps verify_hami`)
 
 1. `hami-scheduler` Deployment Ready;
@@ -392,7 +399,52 @@ kubectl delete ns hami-demo
 #   把 metax-device-config 与 CR cmInit 的 mode 改回 "native", 再重启 metax-gpu-device
 ```
 
-## 9. 边界(本分支)
+## 9. 常用命令速查
+
+```bash
+# ---------- 安装 / 卸载 ----------
+sudo ./deploy-cluster.sh --steps hami
+sudo env CUBESTACK_MODULE_ACTION=uninstall \
+  bash deployments/scripts/modules/03_addon/15_hami.sh
+
+# ---------- 状态 / 日志 ----------
+kubectl -n kube-system get pods -l app.kubernetes.io/instance=hami -o wide
+kubectl -n kube-system get deploy hami-scheduler
+helm -n kube-system status hami
+kubectl -n kube-system get cm hami-scheduler-device -o yaml
+kubectl -n kube-system logs deploy/hami-scheduler -c vgpu-scheduler-extender --tail=200
+kubectl -n kube-system logs deploy/hami-scheduler -c kube-scheduler --tail=200
+
+# ---------- 消费 / 查看 vGPU ----------
+kubectl create ns hami-demo 2>/dev/null || true
+kubectl apply -f docs/hami-example-pods.yaml
+kubectl -n hami-demo get pods -o wide
+kubectl -n hami-demo get pod <pod> -o jsonpath='{.spec.schedulerName}'   # hami-scheduler
+kubectl -n hami-demo get pod <pod> -o jsonpath='{.metadata.annotations}' \
+  | jq 'with_entries(select(.key|test("sgpu|devices-allocated")))'
+kubectl get nodes -o json | jq -r '.items[] |
+  select(.status.allocatable["metax-tech.com/sgpu"] != null) |
+  "\(.metadata.name): sgpu=\(.status.allocatable["metax-tech.com/sgpu"])"'
+ssh <gpu-node> mx-smi        # Sliced GPU: Compute / Vram Quota / sGPU-Id
+kubectl -n hami-demo describe pod <pod> | grep -A2 FilteringSucceed
+
+# ---------- 拓扑感知 ----------
+kubectl get node <gpu-node> -o jsonpath='{.metadata.annotations}' \
+  | jq 'with_entries(select(.key|startswith("metax-tech.com/gpu.topology")))'
+kubectl get node <gpu-node> \
+  -o jsonpath='{.metadata.annotations.metax-tech\.com/node-gpu-devices}' | jq
+ssh <gpu-node> mx-smi topo -m
+
+# ---------- 验证 / 清理 ----------
+sudo ./deploy-cluster.sh --steps verify_hami
+kubectl delete ns hami-demo
+bash deployments/scripts/tools/tests/test-hami-module.sh
+```
+
+> 实测结果见 §8.4：16 个 `25% / 8192MiB` 切片共享 7 张 GPU；
+> 8 个 `vcore=100` 拓扑感知 Pod 分散到 8 张 GPU、覆盖 4 个 NUMA 组。
+
+## 10. 边界(本分支)
 
 - 只支持 **沐曦(MetaX)**;HAMi 自带 NVIDIA device plugin 固定关闭(NVIDIA 场景不在本次范围)。
 - 镜像尚未登记到 `container-image-mirror` / 离线版本树(按用户口径:仅 installer 分支,验证后推送 fork)。

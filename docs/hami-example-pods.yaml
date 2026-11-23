@@ -1,0 +1,45 @@
+# HAMi on MetaX — 完整 Pod 示例(两个文档)
+#   kubectl create ns hami-demo 2>/dev/null || true
+#   kubectl apply -f docs/hami-example-pods.yaml
+#
+# 1) sGPU 共享: 25% 算力 / 8GiB 显存; 不写 schedulerName, 由 HAMi webhook 自动注入 hami-scheduler
+# 2) 拓扑感知: 100% 算力 + sgpu-topology-aware + spread(仅对 100% 算力 sGPU 生效)
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hami-metax-sgpu
+  namespace: hami-demo
+  annotations:
+    hami.io/node-scheduler-policy: "binpack"
+spec:
+  containers:
+    - name: main
+      image: registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64
+      imagePullPolicy: IfNotPresent
+      command: ["sh", "-c", "sleep 3600"]
+      resources:
+        limits:
+          metax-tech.com/sgpu: 1
+          metax-tech.com/vcore: 25
+          metax-tech.com/vmemory: 8
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hami-metax-topo
+  namespace: hami-demo
+  annotations:
+    metax-tech.com/sgpu-topology-aware: "true"
+    hami.io/node-scheduler-policy: "spread"
+spec:
+  containers:
+    - name: main
+      image: registry.cubestack.io:5000/metax/maca:3.8.1.2-ubuntu22.04-amd64
+      imagePullPolicy: IfNotPresent
+      command: ["sh", "-c", "sleep 3600"]
+      resources:
+        limits:
+          metax-tech.com/sgpu: 1
+          metax-tech.com/vcore: 100
+          metax-tech.com/vmemory: 4
