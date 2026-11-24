@@ -616,7 +616,9 @@ unset _has_ceph_step _has_k8s_step
 #     对**全部请求步骤都属于这一类**的情形, 接入改为**尽力而为**: 能接上就接,
 #     接不上只提示不拦停 —— 否则 `--steps pre_install_check` 在一台集群尚未起来的机器上永远跑不动。
 #     只要请求里**有任何一个**需要集群的步骤, 仍走原来的硬门(exit 1)。
-PRE_CLUSTER_STEPS="chrony_pkgs node_pkgs pre_install_check k8s_passwordless k8s_workerbm k8s_hosts k8s_inventory k8s_ntp"
+#     ★ k8s_deploy 本身就是"创建集群"的步骤, 必须同列 —— 否则 `--steps k8s_deploy`
+#       在全新节点上会先要求集群 API 可用而直接退出(2026-11-24 实机)。
+PRE_CLUSTER_STEPS="chrony_pkgs node_pkgs pre_install_check k8s_passwordless k8s_workerbm k8s_hosts k8s_inventory k8s_ntp k8s_deploy"
 if [ -n "${STEPS_ARG}" ]; then
     _all_pre=1
     for _s in ${STEPS_ARG//,/ }; do
